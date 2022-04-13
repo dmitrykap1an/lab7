@@ -19,6 +19,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
     private val soTimeOut : Int = soTimeOut;
     private var server : ServerSocket? = null// серверный сокет
     private var registrationStatus = false
+    private lateinit var printWriter : PrintWriter;
     companion object{
         internal val logger  = LogManager.getLogger(Server::class)
         internal lateinit var inn : ObjectInputStream;// поток чтения из сокета
@@ -126,58 +127,75 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
             val url = "jdbc:postgresql://localhost:5432/studs"
             val connection = DriverManager.getConnection(url)
             val statement = connection.createStatement()
+            println(user.getTypeOfAuth())
             if(user.getTypeOfAuth() == "Registered"){
                 try{
                     val rs = statement.executeQuery("SELECT COUNT(*) FROM users" +
                             " WHERE name = '${user.getName()}' and password = '${user.getPassword()}';")
 
-                    while(rs.next()){
+                      while(rs.next()){
                         try{
                             val cnt = rs.getInt("count")
                             if(cnt > 0){
                                 println("Пользователь '${user.getName()}' обнаружен")
                                 outt.write("OK")
+                                outt.newLine()
                                 outt.flush()
                                 registrationStatus = true;
                             }
                             else{
                                 println("Пользователь '${user.getName()}' не существует")
                                 outt.write("Пользователь '${user.getName()}' не существует")
+                                outt.newLine()
                                 outt.flush()
                             }
                         }
                         catch(e : NumberFormatException){
                             println(e.message)
                         }
-                    }
-                    rs.close(
-                    )
+                      }
+                    rs.close()
                 }catch (e : PSQLException){
                     outt.write("Пользователь '${user.getName()}' не существует")
                     outt.flush();
                 }
 
             }
+            else {
+                    val rs = statement.executeQuery("SELECT COUNT(*) FROM users" +
+                            " WHERE name = '${user.getName()}';")
 
-            else if(user.getTypeOfAuth() == "NotRegistered"){
-                try {
-                    val rs =
-                        statement.executeQuery("INSERT INTO users (name, password) VALUES('${user.getName()}', '${user.getPassword()}');")
-                    println("Регистрация прошла успешно")
-                    outt.write("Регистрация прошла успешно")
-                    outt.flush()
-                    registrationStatus = true
-                    rs.close()
-                }catch (e : PSQLException){
-                    outt.write("Регистрация прошла успешно")
-                    outt.flush()
-                    registrationStatus = true
-                }
+                    while(rs.next()){
+                        try{
+                            val cnt = rs.getInt("count")
+                            if(cnt > 0){
+                                println("Пользователь '${user.getName()}' уже существует")
+                                outt.write("Существует")
+                                outt.newLine()
+                                outt.flush()
+                                registrationStatus = true;
+                            }
+                            else {
+                               val rs = statement.executeUpdate("INSERT INTO users (name, password) VALUES('${user.getName()}', '${user.getPassword()}');")
+                                println("Пользователь добавлен")
+                                println("Регистрация прошла успешно")
+                                outt.write("Регистрация прошла успешно")
+                                outt.newLine()
+                                outt.flush()
+                                registrationStatus = true;
+                            }
+                                }catch (_: PSQLException){
+                                outt.write("Регистрация прошла успешно")
+                                outt.flush()
+                                registrationStatus = true
+                             }
+                    }
 
             }
         }
     }
 }
+
 
 
 

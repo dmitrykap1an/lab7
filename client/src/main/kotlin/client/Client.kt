@@ -15,6 +15,7 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
     private lateinit var clientSocket: Socket;//сокет для общения
     private lateinit var inn: BufferedReader; // поток чтения из сокета
     private lateinit var outt: ObjectOutputStream; // поток записи в сокет
+    private lateinit var reader : ObjectInputStream;
     private val commandFinder : CommandFinder = commandFinder;
     private val PORT = port;
     private val HOST = host;
@@ -40,14 +41,18 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
         while(!registrationStatus) {
             val user = AuthManager.handle()
             outt.writeObject(user)
-            registrationStatus = true
-            val status = inn.readLines()
-            if (status.isNotEmpty() && status[0] == "OK"){
+            outt.flush()
+            inn = BufferedReader(InputStreamReader(clientSocket.inputStream))
+            val status = inn.readLine()
+            if (status == "OK"){
                 registrationStatus = true;
                 println("Вход произошел успешно")
             }
-            else if(status[0].split(' ')[0] == "Пользователь"){
-                println(status[0])
+            else if(status.split(' ')[0] == "Пользователь"){
+                println(status)
+            }
+            else if(status.split(' ')[0] == "Существует"){
+                println("Пользователь с таким именем уже существует")
             }
             else println("Пользователь с такими именем и паролем не обнаружен")
         }
