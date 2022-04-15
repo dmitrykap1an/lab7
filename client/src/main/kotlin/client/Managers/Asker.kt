@@ -13,8 +13,16 @@ class Asker {
             var login: String
             while (true) {
                 try {
-                    println("Введите Ваш логин:")
-                    login = readLine()!!.trim()
+                    val console = System.console()
+                    if(console == null){
+                        println("Введите Ваш логин:")
+                        login = readLine()!!.trim()
+                    }
+                    else{
+                        val log = console.readPassword("Введите Ваш логин:")
+                        login = String(log)
+                    }
+
                     if (login == "") throw UserLoginException()
                     break
                 } catch (e: NullPointerException) {
@@ -31,8 +39,16 @@ class Asker {
             var password: String
             while (true) {
                 try {
-                    println("Введите Ваш пароль:")
-                    password = readLine()!!.trim()
+                    val console = System.console()
+                    if(console == null){
+                        println("Введите Ваш пароль:")
+                        password = readLine()!!.trim()
+                    }
+                    else{
+                        val pass = console.readPassword("Введите Ваш пароль:")
+                        password = String(pass)
+                    }
+
                     if (password == "") throw UserPasswordException()
                     break
                 } catch (e: NullPointerException) {

@@ -5,9 +5,11 @@ import general.AppIO.CommandSerialize
 import general.Exceptions.CloseSocketException
 import org.apache.logging.log4j.LogManager
 import org.postgresql.util.PSQLException
+import server.Database.PasswordHasher
 import server.Managers.CommandManager
 import java.io.*
 import java.net.*
+import java.sql.Connection
 import java.sql.DriverManager
 
 
@@ -120,77 +122,92 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
         }
     }
 
+
     private fun userChecker(){
 
         while(!registrationStatus){
+
             val user = inn.readObject() as UserSerialize
             val url = "jdbc:postgresql://localhost:5432/studs"
             val connection = DriverManager.getConnection(url)
-            val statement = connection.createStatement()
             println(user.getTypeOfAuth())
             if(user.getTypeOfAuth() == "Registered"){
-                try{
-                    val rs = statement.executeQuery("SELECT COUNT(*) FROM users" +
-                            " WHERE name = '${user.getName()}' and password = '${user.getPassword()}';")
-
-                      while(rs.next()){
-                        try{
-                            val cnt = rs.getInt("count")
-                            if(cnt > 0){
-                                println("Пользователь '${user.getName()}' обнаружен")
-                                outt.write("OK")
-                                outt.newLine()
-                                outt.flush()
-                                registrationStatus = true;
-                            }
-                            else{
-                                println("Пользователь '${user.getName()}' не существует")
-                                outt.write("Пользователь '${user.getName()}' не существует")
-                                outt.newLine()
-                                outt.flush()
-                            }
-                        }
-                        catch(e : NumberFormatException){
-                            println(e.message)
-                        }
-                      }
-                    rs.close()
-                }catch (e : PSQLException){
-                    outt.write("Пользователь '${user.getName()}' не существует")
-                    outt.flush();
-                }
-
+                checkRegistration(connection, user)
             }
             else {
-                    val rs = statement.executeQuery("SELECT COUNT(*) FROM users" +
-                            " WHERE name = '${user.getName()}';")
+                    registration(connection, user)
 
-                    while(rs.next()){
-                        try{
-                            val cnt = rs.getInt("count")
-                            if(cnt > 0){
-                                println("Пользователь '${user.getName()}' уже существует")
-                                outt.write("Существует")
-                                outt.newLine()
-                                outt.flush()
-                                registrationStatus = true;
-                            }
-                            else {
-                               val rs = statement.executeUpdate("INSERT INTO users (name, password) VALUES('${user.getName()}', '${user.getPassword()}');")
-                                println("Пользователь добавлен")
-                                println("Регистрация прошла успешно")
-                                outt.write("Регистрация прошла успешно")
-                                outt.newLine()
-                                outt.flush()
-                                registrationStatus = true;
-                            }
-                                }catch (_: PSQLException){
-                                outt.write("Регистрация прошла успешно")
-                                outt.flush()
-                                registrationStatus = true
-                             }
+            }
+        }
+    }
+
+
+    private fun checkRegistration(connection : Connection, user : UserSerialize){
+
+        try{
+            val statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE name = ? and password = ?")
+            statement.setString(1, user.getName())
+            statement.setString(2, PasswordHasher.hashPassword(user.getPassword()))
+
+            val rs = statement.executeQuery()
+
+            while(rs.next()){
+                try{
+                    val cnt = rs.getInt("count")
+                    if(cnt > 0){
+                        println("Пользователь '${user.getName()}' обнаружен")
+                        outt.write("OK")
+                        outt.newLine()
+                        outt.flush()
+                        registrationStatus = true;
                     }
+                    else{
+                        println("Пользователь '${user.getName()}' не существует")
+                        outt.write("Пользователь '${user.getName()}' не существует")
+                        outt.newLine()
+                        outt.flush()
+                    }
+                }
+                catch(e : NumberFormatException){
+                    println(e.message)
+                }
+            }
+        }catch (e : PSQLException){
+            outt.write("Пользователь '${user.getName()}' не существует")
+            outt.flush();
+        }
+    }
 
+
+    private fun registration(connection: Connection, user: UserSerialize){
+        val statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE name = ?")
+        statement.setString(1,user.getName())
+        val rs = statement.executeQuery()
+
+        while(rs.next()){
+            try{
+                val cnt = rs.getInt("count")
+                if(cnt > 0){
+                    println("Пользователь '${user.getName()}' уже существует")
+                    outt.write("Существует")
+                    outt.newLine()
+                    outt.flush()
+                }
+                else {
+                    val st = connection.prepareStatement("INSERT INTO users (name, password) VALUES( ? , ?)")
+                    st.setString(1, user.getName())
+                    st.setString(2, PasswordHasher.hashPassword(user.getPassword()))
+                    st.executeUpdate()
+                    println("Пользователь добавлен")
+                    println("Регистрация прошла успешно")
+                    outt.write("Регистрация прошла успешно")
+                    outt.newLine()
+                    outt.flush()
+                    registrationStatus = true
+                }
+            }catch (_: PSQLException){
+                outt.write("Регистрация прошла успешно")
+                outt.flush()
             }
         }
     }
