@@ -2,8 +2,7 @@ package server.Database
 
 import server.Server
 import java.math.BigInteger
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
+import java.security.*
 
 
 class PasswordHasher {
@@ -17,6 +16,7 @@ class PasswordHasher {
                 val bytes = messageDigest.digest(password.toByteArray(Charsets.UTF_8))
                 val temp = messageDigest.digest(bytes)
                 return BigInteger(1, temp).toString()
+
             } catch (e: NoSuchAlgorithmException) {
                 Server.logger.error("Не найден алгоритм хэширования пароля!")
                 throw IllegalStateException(e)

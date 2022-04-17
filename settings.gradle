@@ -3,4 +3,3 @@ rootProject.name = 'lab6-master'
 include 'server'
 include 'client'
 include 'general'
-

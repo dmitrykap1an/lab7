@@ -92,6 +92,7 @@ class CollectionManager {
 
     fun info(){
 
+        Server.logger.info("Выполнение команды info")
         try {
             Server.outt.write(
                 "Date of init : $lastInitTime\n" +
@@ -136,6 +137,7 @@ class CollectionManager {
 
     fun show(){
 
+        Server.logger.info("Выполнение команды show")
         if (collectionOfMusicBands.size > 0) {
             collectionOfMusicBands.stream().forEach {
                 Server.outt.write(it.toString() + "\n")
@@ -151,6 +153,7 @@ class CollectionManager {
 
     fun add(command : MusicBand?, list : List<String> = listOf()){
 
+        Server.logger.info("Выполнение команды add")
         val musicBand : MusicBand? = command ?: inputData.askMusicBand(list);
 
         if(musicBand != null)
@@ -162,6 +165,7 @@ class CollectionManager {
 
     fun clear(){
 
+        Server.logger.info("Выполнение команды clear")
         collectionOfMusicBands.clear();
         Server.outt.write("Коллекция очищена")
         Server.outt.flush();
@@ -170,6 +174,7 @@ class CollectionManager {
 
     fun remove(id : String){
 
+        Server.logger.info("Выполнение команды remove_by_id ")
         try {
 
             val newId = id.toInt()
@@ -200,6 +205,7 @@ class CollectionManager {
 
     fun save(){
 
+        Server.logger.info("Выполнение команды save")
         fileManager.collectionWriter(collectionOfMusicBands);
         lastSaveTime = LocalDateTime.now();
 
@@ -209,6 +215,7 @@ class CollectionManager {
 
     fun removeFirst(){
 
+        Server.logger.info("Выполнение команды remove_first")
         if(collectionOfMusicBands.size > 0) {
 
             collectionOfMusicBands.remove(collectionOfMusicBands[0]);
@@ -224,6 +231,7 @@ class CollectionManager {
 
     fun removeAllByDescription(description : String){
 
+        Server.logger.info("Выполнение команды remove_all_by_description")
         var cnt = 0;
 
             for (i in collectionOfMusicBands.indices) {
@@ -251,7 +259,7 @@ class CollectionManager {
 
     fun removeGreater(name : String){
 
-
+        Server.logger.info("Выполнение команды remove_greater")
             try {
 
 
@@ -281,6 +289,7 @@ class CollectionManager {
 
     fun countLessThan(numberOfParticipants : String){
 
+        Server.logger.info("Выполнение команды count_less_than_number_of_participants numberOfParticipants")
         try {
 
             val newNumber = numberOfParticipants.toLong();
@@ -304,6 +313,7 @@ class CollectionManager {
 
     fun printlnFrontManDescending(){
 
+        Server.logger.info("Выполнение команды print_field_descending_front_man")
         val newCollection = collectionOfMusicBands.asReversed();
         for(i in newCollection.indices){
 

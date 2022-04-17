@@ -22,7 +22,6 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
     private val soTimeOut : Int = soTimeOut;
     private var server : ServerSocket? = null// серверный сокет
     private var registrationStatus = false
-    private lateinit var printWriter : PrintWriter;
     companion object{
         internal val logger  = LogManager.getLogger(Server::class)
         internal lateinit var inn : ObjectInputStream;// поток чтения из сокета
@@ -169,6 +168,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                             println(cnt)
                             if(cnt > 0){
                                 println("Пользователь '${user.getName()}' обнаружен")
+                                Server.logger.info("Пользователь '${user.getName()}' обнаружен")
                                 outt.write("OK")
                                 outt.newLine()
                                 outt.flush()
@@ -177,12 +177,13 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                             else{
                                 println("Пользователь '${user.getName()}' не существует")
                                 outt.write("Пользователь '${user.getName()}' не существует")
+                                Server.logger.info("Пользователь '${user.getName()}' не существует")
                                 outt.newLine()
                                 outt.flush()
                             }
                         }
                             catch(e : NumberFormatException){
-                            println(e.message)
+                            logger.error("Неверный формат ввода")
                         }
                     }
                 }
@@ -190,6 +191,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
             else{
                 println("Пользователь '${user.getName()}' не существует")
                 outt.write("Пользователь '${user.getName()}' не существует")
+                logger.info("Пользователь '${user.getName()}' не существует")
                 outt.newLine()
                 outt.flush()
             }
@@ -197,6 +199,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
         }catch (e : PSQLException){
             outt.write("Пользователь '${user.getName()}' не существует")
             outt.flush();
+            logger.error("Пользователь '${user.getName()}' не существует")
         }
     }
 
@@ -214,6 +217,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                     outt.write("Существует")
                     outt.newLine()
                     outt.flush()
+                    logger.info("Пользователь '${user.getName()}' уже существует")
                 }
                 else {
                     val salt = getRandomString(32)
@@ -233,6 +237,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                     outt.newLine()
                     outt.flush()
                     registrationStatus = true
+                    logger.info("Регистрация прошла успешно")
                 }
             }catch (_: PSQLException){
                 outt.write("Регистрация прошла успешно")
@@ -257,9 +262,11 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
 
     private fun getRandomString(length : Int) : String {
         val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        logger.info("Создана рандомная соль")
         return (1..length)
             .map { allowedChars.random() }
             .joinToString("")
+
     }
 
 }
