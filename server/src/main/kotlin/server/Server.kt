@@ -155,9 +155,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                 val saltRs = saltStatement.executeQuery()
                 while (saltRs.next()){
                     salt = saltRs.getString("salt")
-                    println("User's salt is $salt")
                     val pass = PasswordHasher.hashPassword(user.getPassword(), salt)
-                    println("User's password is $pass")
 
                     val statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE name = ? and password = ?")
                     statement.setString(1, user.getName())
