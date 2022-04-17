@@ -10,15 +10,17 @@ class PasswordHasher {
 
     companion object{
 
-        fun hashPassword(password: String): String {
+        fun hashPassword(password: String, salt : ByteArray) : String {
             try {
+
                 val md = MessageDigest.getInstance("SHA-512")
-                val bytes = md.digest(password.toByteArray(StandardCharsets.UTF_8))
+                val bytes = md.digest(password.toByteArray(StandardCharsets.UTF_8) + salt)
                 val newPassword = md.digest(bytes).toString()
+                println("Password is $newPassword")
                  return newPassword
-            } catch (exception: NoSuchAlgorithmException) {
+            } catch (e : NoSuchAlgorithmException) {
                 Server.logger.error("Не найден алгоритм хэширования пароля!")
-                throw IllegalStateException(exception)
+                throw IllegalStateException(e)
             }
         }
     }

@@ -15,7 +15,6 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
     private lateinit var clientSocket: Socket;//сокет для общения
     private lateinit var inn: BufferedReader; // поток чтения из сокета
     private lateinit var outt: ObjectOutputStream; // поток записи в сокет
-    private lateinit var reader : ObjectInputStream;
     private val commandFinder : CommandFinder = commandFinder;
     private val PORT = port;
     private val HOST = host;
@@ -48,8 +47,9 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
                 registrationStatus = true;
                 println("Вход произошел успешно")
             }
-            else if(status.split(' ')[0] == "Пользователь"){
+            else if(status == "Регистрация прошла успешно"){
                 println(status)
+                registrationStatus = true
             }
             else if(status.split(' ')[0] == "Существует"){
                 println("Пользователь с таким именем уже существует")

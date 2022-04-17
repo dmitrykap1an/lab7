@@ -1,6 +1,7 @@
 package server
 
-import client.Managers.UserSerialize
+import client.Managers.*
+import client.User
 import general.AppIO.CommandSerialize
 import general.Exceptions.CloseSocketException
 import org.apache.logging.log4j.LogManager
@@ -9,8 +10,8 @@ import server.Database.PasswordHasher
 import server.Managers.CommandManager
 import java.io.*
 import java.net.*
-import java.sql.Connection
-import java.sql.DriverManager
+import java.sql.*
+import kotlin.random.Random
 
 
 class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runnable{
@@ -130,7 +131,6 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
             val user = inn.readObject() as UserSerialize
             val url = "jdbc:postgresql://localhost:5432/studs"
             val connection = DriverManager.getConnection(url)
-            println(user.getTypeOfAuth())
             if(user.getTypeOfAuth() == "Registered"){
                 checkRegistration(connection, user)
             }
@@ -145,33 +145,57 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
     private fun checkRegistration(connection : Connection, user : UserSerialize){
 
         try{
-            val statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE name = ? and password = ?")
-            statement.setString(1, user.getName())
-            statement.setString(2, PasswordHasher.hashPassword(user.getPassword()))
 
-            val rs = statement.executeQuery()
+            if(checkPerson(connection, user)){
 
-            while(rs.next()){
-                try{
-                    val cnt = rs.getInt("count")
-                    if(cnt > 0){
-                        println("Пользователь '${user.getName()}' обнаружен")
-                        outt.write("OK")
-                        outt.newLine()
-                        outt.flush()
-                        registrationStatus = true;
+                println("try to find salt")
+                val saltStatement = connection.prepareStatement("SELECT salt FROM userssalt WHERE name = ?")
+                saltStatement.setString(1, user.getName())
+                var salt : ByteArray
+                val saltRs = saltStatement.executeQuery()
+                while (saltRs.next()){
+                    salt = saltRs.getBytes("salt")
+                    println("User's salt is $salt")
+                    val pass = PasswordHasher.hashPassword(user.getPassword(), salt)
+                    println("User's password is $pass")
+
+                    val statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE name = ? and password = ?")
+                    statement.setString(1, user.getName())
+                    statement.setString(2, pass)
+
+                    val rs = statement.executeQuery()
+
+                    while(rs.next()){
+                        try{
+                            val cnt = rs.getInt("count")
+                            println(cnt)
+                            if(cnt > 0){
+                                println("Пользователь '${user.getName()}' обнаружен")
+                                outt.write("OK")
+                                outt.newLine()
+                                outt.flush()
+                                registrationStatus = true;
+                            }
+                            else{
+                                println("Пользователь '${user.getName()}' не существует")
+                                outt.write("Пользователь '${user.getName()}' не существует")
+                                outt.newLine()
+                                outt.flush()
+                            }
+                        }
+                            catch(e : NumberFormatException){
+                            println(e.message)
+                        }
                     }
-                    else{
-                        println("Пользователь '${user.getName()}' не существует")
-                        outt.write("Пользователь '${user.getName()}' не существует")
-                        outt.newLine()
-                        outt.flush()
-                    }
-                }
-                catch(e : NumberFormatException){
-                    println(e.message)
                 }
             }
+            else{
+                println("Пользователь '${user.getName()}' не существует")
+                outt.write("Пользователь '${user.getName()}' не существует")
+                outt.newLine()
+                outt.flush()
+            }
+
         }catch (e : PSQLException){
             outt.write("Пользователь '${user.getName()}' не существует")
             outt.flush();
@@ -194,10 +218,18 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                     outt.flush()
                 }
                 else {
+                    val salt = Random.nextBytes(32)
+                    println("Random salt is $salt")
+                    val pass = PasswordHasher.hashPassword(user.getPassword(), salt)
+
                     val st = connection.prepareStatement("INSERT INTO users (name, password) VALUES( ? , ?)")
                     st.setString(1, user.getName())
-                    st.setString(2, PasswordHasher.hashPassword(user.getPassword()))
+                    st.setString(2, pass)
                     st.executeUpdate()
+                    val saltStatement = connection.prepareStatement("INSERT INTO userssalt (name, salt) VALUES(?, ?)")
+                    saltStatement.setString(1, user.getName())
+                    saltStatement.setBytes(2, salt)
+                    saltStatement.executeUpdate()
                     println("Пользователь добавлен")
                     println("Регистрация прошла успешно")
                     outt.write("Регистрация прошла успешно")
@@ -211,6 +243,21 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
             }
         }
     }
+
+    private fun checkPerson(connection : Connection, user : UserSerialize) : Boolean{
+        val statement = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE name = ?")
+        statement.setString(1,user.getName())
+        val rs = statement.executeQuery()
+        var cnt = 0;
+
+        while(rs.next()){
+
+             cnt = rs.getInt("count")
+        }
+
+        return cnt > 0
+    }
+
 }
 
 
