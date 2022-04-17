@@ -151,10 +151,10 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                 println("try to find salt")
                 val saltStatement = connection.prepareStatement("SELECT salt FROM userssalt WHERE name = ?")
                 saltStatement.setString(1, user.getName())
-                var salt : ByteArray
+                var salt : String
                 val saltRs = saltStatement.executeQuery()
                 while (saltRs.next()){
-                    salt = saltRs.getBytes("salt")
+                    salt = saltRs.getString("salt")
                     println("User's salt is $salt")
                     val pass = PasswordHasher.hashPassword(user.getPassword(), salt)
                     println("User's password is $pass")
@@ -218,8 +218,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                     outt.flush()
                 }
                 else {
-                    val salt = Random.nextBytes(32)
-                    println("Random salt is $salt")
+                    val salt = getRandomString(32)
                     val pass = PasswordHasher.hashPassword(user.getPassword(), salt)
 
                     val st = connection.prepareStatement("INSERT INTO users (name, password) VALUES( ? , ?)")
@@ -228,7 +227,7 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
                     st.executeUpdate()
                     val saltStatement = connection.prepareStatement("INSERT INTO userssalt (name, salt) VALUES(?, ?)")
                     saltStatement.setString(1, user.getName())
-                    saltStatement.setBytes(2, salt)
+                    saltStatement.setString(2, salt)
                     saltStatement.executeUpdate()
                     println("Пользователь добавлен")
                     println("Регистрация прошла успешно")
@@ -256,6 +255,13 @@ class Server(commandManager: CommandManager, port : Int, soTimeOut : Int) : Runn
         }
 
         return cnt > 0
+    }
+
+    private fun getRandomString(length : Int) : String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
     }
 
 }
