@@ -13,15 +13,8 @@ class Asker {
             var login: String
             while (true) {
                 try {
-                    val console = System.console()
-                    if(console == null){
-                        println("Введите Ваш логин:")
-                        login = readLine()!!.trim()
-                    }
-                    else{
-                        val log = console.readPassword("Введите Ваш логин:")
-                        login = String(log)
-                    }
+                    println("Введите Ваш логин:")
+                    login = readLine()!!.trim()
 
                     if (login == "") throw UserLoginException()
                     break
@@ -65,13 +58,13 @@ class Asker {
 
         fun askQuestion(text: String): Boolean {
 
-            println("$text д/н")
+            println("$text Д/н")
 
             while (true) {
 
                 try {
                     when (readLine()!!.trim().uppercase(Locale.getDefault())) {
-                        "ДА", "Д", "+" -> {
+                        "ДА", "Д", "+", "" -> {
                             return true
                             break;
                         }

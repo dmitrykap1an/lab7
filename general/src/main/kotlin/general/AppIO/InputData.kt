@@ -4,8 +4,6 @@ import JavaClasses.*
 import general.Exceptions.EmptyArgumentException
 import general.Exceptions.IllegalValueException
 
-import java.util.*
-
 /**
  *  Класс для ввода данных о музыкальной группе
  */

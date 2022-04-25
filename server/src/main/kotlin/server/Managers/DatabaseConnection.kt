@@ -1,19 +1,18 @@
 package server.Managers
 
-import server.Server
+import server.serverWork.Server
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
+import java.util.Properties
 
 class DatabaseConnection {
     private val url : String = "jdbc:postgresql://localhost:5432/studs"
-    val user : String;
-    val password : String;
+    private val properties : Properties;
     var connection: Connection? = null
 
-    constructor(user : String, password : String){
-        this.user = user;
-        this.password = password;
+    constructor(properties: Properties){
+        this.properties = properties
     }
 
     fun connectionToDatabase(): Connection {
@@ -22,7 +21,7 @@ class DatabaseConnection {
 
                 try {
 
-                    connection = DriverManager.getConnection(url, user, password);
+                    connection = DriverManager.getConnection(url, properties)
                     println("Подключение к базе данных прошло успешно")
 
                 } catch (e: SQLException) {

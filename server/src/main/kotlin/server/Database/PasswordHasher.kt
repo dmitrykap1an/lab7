@@ -1,8 +1,9 @@
 package server.Database
 
-import server.Server
+import server.serverWork.Server
 import java.math.BigInteger
-import java.security.*
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 
 
 class PasswordHasher {

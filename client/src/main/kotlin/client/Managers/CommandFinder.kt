@@ -4,6 +4,7 @@ package client.Managers
 import general.AppIO.CommandSerialize
 import general.AppIO.InputData
 import general.Exceptions.CommandException
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 
 /**
@@ -12,10 +13,9 @@ import general.Exceptions.CommandException
  */
 class CommandFinder(private val inputData : InputData){
 
-
+    @Synchronized
     fun commandSearcher() : CommandSerialize? {
-
-
+        try{
                 val userCommand = readLine()!!.split(" ").toList()
 
                 val commandsLen1 : List<String> = listOf("help", "info", "show", "clear",
@@ -27,18 +27,23 @@ class CommandFinder(private val inputData : InputData){
                 if(userCommand.size > 2) throw CommandException()
                 userCommand.forEach { it.trim() }
 
-        return when{
+            return when{
 
-            userCommand.size == 1 && userCommand[0] in commandsLen1 -> CommandSerialize(userCommand[0]);
+                userCommand.size == 1 && userCommand[0] in commandsLen1 -> CommandSerialize(userCommand[0]);
 
-            userCommand.size == 2 && userCommand[0] in commandsLen2 -> CommandSerialize(userCommand[0], userCommand[1]);
+                userCommand.size == 2 && userCommand[0] in commandsLen2 -> CommandSerialize(userCommand[0], userCommand[1]);
 
-            userCommand.size == 1 && userCommand[0] == "add"-> CommandSerialize(userCommand[0], musicBand = inputData.askMusicBand()!!);
+                userCommand.size == 1 && userCommand[0] == "add"-> CommandSerialize(userCommand[0], musicBand = inputData.askMusicBand()!!);
 
-            userCommand.size == 2  && userCommand[0] == "update" -> CommandSerialize(userCommand[0], userCommand[1], inputData.askMusicBand()!!)
+                userCommand.size == 2  && userCommand[0] == "update" -> CommandSerialize(userCommand[0], userCommand[1], inputData.askMusicBand()!!)
 
-            else -> null
+                else -> null
 
+            }
+        }
+        catch (e : CommandException){
+            return null
         }
     }
+
 }

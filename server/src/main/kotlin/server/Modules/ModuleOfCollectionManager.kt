@@ -1,17 +1,16 @@
 package server.Modules
 
+import client.Managers.FileManager
 import dev.shustoff.dikt.Create
 import dev.shustoff.dikt.CreateSingle
 import dev.shustoff.dikt.ProvideSingle
 import dev.shustoff.dikt.UseModules
 import general.AppIO.InputData
-import client.Managers.FileManager
 import server.Database.PostgresDao
 import server.Managers.CollectionManager
-import server.Managers.DatabaseConnection
 
-@UseModules(ModuleOfFileManager::class)
-class ModuleOfCollectionManager(private val moduleOfFileManager: ModuleOfFileManager) {
+@UseModules(ModuleOfFileManager::class, ModuleOfPostgresDao::class)
+class ModuleOfCollectionManager(private val moduleOfFileManager: ModuleOfFileManager, private val moduleOfPostgresDao: ModuleOfPostgresDao) {
 
 
     @ProvideSingle
@@ -22,6 +21,9 @@ class ModuleOfCollectionManager(private val moduleOfFileManager: ModuleOfFileMan
 
     @Create
     fun collectionManager() : CollectionManager
+
+    @ProvideSingle
+    private fun postgresDao() : PostgresDao
 
 
 

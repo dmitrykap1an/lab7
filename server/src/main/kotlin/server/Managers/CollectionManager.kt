@@ -4,11 +4,10 @@ import JavaClasses.MusicBand
 import client.Managers.FileManager
 import general.AppIO.InputData
 import general.Exceptions.EmptyArgumentException
-import server.Database.PostgresDao
-import server.Server
+import general.AppIO.Answer
+import server.serverWork.Server
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.math.max
 
 /**
  * Класс для работы с коллекцией музыкальных групп
@@ -33,46 +32,46 @@ class CollectionManager {
 //        addFileCommandsToCollection()
 //    }
 
-    fun update(id: String, musicBand: MusicBand?, list: List<String> = listOf()) {
+    fun update(id: String, musicBand: MusicBand?, list: List<String> = listOf()) : Answer {
 
         try {
 
             val newId = id.toInt()
-                    if(newId > collectionOfMusicBands.size || newId < 0){
+            if(newId > collectionOfMusicBands.size || newId < 0){
 
 
-                    } else {
-                        for (i in collectionOfMusicBands.indices) {
+            } else {
+                for (i in collectionOfMusicBands.indices) {
 
-                            if (collectionOfMusicBands[i].id == newId) {
+                    if (collectionOfMusicBands[i].id == newId) {
 
-                                if (list.isEmpty()) {
+                        if (list.isEmpty()) {
 
-                                    collectionOfMusicBands[i] = musicBand!!;
-                                    break;
+                            collectionOfMusicBands[i] = musicBand!!;
+                            break;
 
-                                } else {
+                        } else {
 
-                                    val localParam = inputData.askMusicBand(list)
-                                    if (localParam != null)
-                                        collectionOfMusicBands[i] = localParam;
-                                };
+                            val localParam = inputData.askMusicBand(list)
+                            if (localParam != null)
+                                collectionOfMusicBands[i] = localParam;
+                        };
 
-                                collectionOfMusicBands.stream().sorted(compareBy { it.name })
+                        collectionOfMusicBands.stream().sorted(compareBy { it.name })
 
-                            }
-                        }
                     }
-        } catch (e : NumberFormatException) {
-            Server.outt.write("Данная строка не является числом")
-        }catch (e : IllegalArgumentException) {
-                Server.outt.write("Данная строка не является числом")
-        }catch (e : NullPointerException){
+                }
 
-        }finally {
-            Server.outt.flush();
+            }
+        } catch (e : NumberFormatException) {
+            return Answer("Данная строка не является числом")
+        }catch (e : IllegalArgumentException) {
+            return Answer("Данная строка не является числом")
+        }catch (e : NullPointerException){
+                return Answer("Ошибка : Команда не выполнена")
         }
-}
+        return Answer("Команда update выполнена")
+    }
 
 //    private fun addFileCommandsToCollection(){
 //
@@ -90,89 +89,80 @@ class CollectionManager {
 //
 //    }
 
-    fun info(){
+    fun info() : Answer {
 
         Server.logger.info("Выполнение команды info")
         try {
-            Server.outt.write(
-                "Date of init : $lastInitTime\n" +
-                    "Date of last save : $lastSaveTime\n" +
-                    "Type : ${collectionOfMusicBands::class.simpleName}\n" +
-                    "Count of elements : ${collectionOfMusicBands.size}\n"
-            )
+                return Answer("Date of init : $lastInitTime\n" +
+                        "Date of last save : $lastSaveTime\n" +
+                        "Type : ${collectionOfMusicBands::class.simpleName}\n" +
+                        "Count of elements : ${collectionOfMusicBands.size}\n")
 
 
         }
         catch (e : UninitializedPropertyAccessException){
 
             try{
-                Server.outt.write(
-                    "Date of init : $lastInitTime\n" +
-                        "Date of last save : the collection wasn't saved to a file\n" +
-                        "Type : ${collectionOfMusicBands::class.simpleName}\n" +
-                        "Count of elements : ${collectionOfMusicBands.size}\n"
+                   return Answer("Date of init : $lastInitTime\n" +
+                            "Date of last save : the collection wasn't saved to a file\n" +
+                            "Type : ${collectionOfMusicBands::class.simpleName}\n" +
+                            "Count of elements : ${collectionOfMusicBands.size}\n")
 
-                )
-                Server.outt.flush()
 
             }
             catch (e : UninitializedPropertyAccessException){
 
-                Server.outt.write(
 
-                        "Date of init : the collection is empty\n" +
+                   return Answer("Date of init : the collection is empty\n" +
                             "Date of last save : the collection wasn't saved to a file\n" +
                             "Type : ${collectionOfMusicBands::class.simpleName}\n" +
-                            "Count of elements : ${collectionOfMusicBands.size}\n"
-                )
-
+                            "Count of elements : ${collectionOfMusicBands.size}\n")
             }
 
         }
-        finally {
-            Server.outt.flush();
-        }
-
     }
 
-    fun show(){
+    fun show() : Answer {
 
+        val result = StringBuilder()
         Server.logger.info("Выполнение команды show")
         if (collectionOfMusicBands.size > 0) {
             collectionOfMusicBands.stream().forEach {
-                Server.outt.write(it.toString() + "\n")
-                Server.outt.flush();
+                result.append(it.toString() + "\n")
             }
+
+            return Answer(result.toString())
         }
         else {
-            Server.outt.write("Коллекция пуста\n")
-            Server.outt.flush();
+            return Answer("Коллекция пустая")
         }
+
 
     }
 
-    fun add(command : MusicBand?, list : List<String> = listOf()){
+    fun add(command : MusicBand?, list : List<String> = listOf()) : Answer {
 
         Server.logger.info("Выполнение команды add")
         val musicBand : MusicBand? = command ?: inputData.askMusicBand(list);
 
         if(musicBand != null)
             collectionOfMusicBands.add(musicBand);
-            collectionOfMusicBands.stream().sorted(compareBy { it.name })
-            lastInitTime = LocalDateTime.now();
+        collectionOfMusicBands.stream().sorted(compareBy { it.name })
+        lastInitTime = LocalDateTime.now();
+
+        return Answer("Команда add выполнена")
 
     }
 
-    fun clear(){
+    fun clear() : Answer {
 
         Server.logger.info("Выполнение команды clear")
         collectionOfMusicBands.clear();
-        Server.outt.write("Коллекция очищена")
-        Server.outt.flush();
+        return Answer("Коллекция очищена")
 
     }
 
-    fun remove(id : String){
+    fun remove(id : String) : Answer {
 
         Server.logger.info("Выполнение команды remove_by_id ")
         try {
@@ -185,109 +175,106 @@ class CollectionManager {
                     if (collectionOfMusicBands[i].id == newId) {
 
                         collectionOfMusicBands.remove(collectionOfMusicBands[i])
-                        Server.outt.write("Элемент удален")
                         break;
                     }
 
-                    if(i == collectionOfMusicBands.size - 1) Server.outt.write("Id не найден")
+                    if(i == collectionOfMusicBands.size - 1) return Answer("Id не найден")
                 }
-            } else Server.outt.write("Id не найден")
+            } else return Answer("Id не найден")
 
         } catch (e : NumberFormatException){
-            Server.outt.write("Данная строка не является числом")
+            return Answer("Данная строка не является числом")
         }catch (e : IllegalArgumentException){
-            Server.outt.write("Данная строка не является числом")
-        }finally {
-            Server.outt.flush();
+            return Answer("Данная строка не является числом")
         }
+        return Answer("Элемент удален")
 
     }
 
-    fun save(){
+    fun save() : Answer {
 
         Server.logger.info("Выполнение команды save")
         fileManager.collectionWriter(collectionOfMusicBands);
         lastSaveTime = LocalDateTime.now();
+        return Answer("Коллекция сохранена")
 
 
     }
 
 
-    fun removeFirst(){
+    fun removeFirst() : Answer {
 
         Server.logger.info("Выполнение команды remove_first")
         if(collectionOfMusicBands.size > 0) {
 
             collectionOfMusicBands.remove(collectionOfMusicBands[0]);
-            Server.outt.write("Первый элемент удален")
+            return Answer("Первый элемент удален")
         }
         else {
-            Server.outt.write("Невозможно удалить первый элемент - коллекция пуста")
+            return Answer("Невозможно удалить первый элемент - коллекция пуста")
         }
-
-        Server.outt.flush();
 
     }
 
-    fun removeAllByDescription(description : String){
+    fun removeAllByDescription(description : String) : Answer {
 
         Server.logger.info("Выполнение команды remove_all_by_description")
         var cnt = 0;
 
-            for (i in collectionOfMusicBands.indices) {
+        for (i in collectionOfMusicBands.indices) {
 
-                if (collectionOfMusicBands[i].description.equals(description)) {
+            if (collectionOfMusicBands[i].description.equals(description)) {
 
-                    collectionOfMusicBands.remove(collectionOfMusicBands[i]);
-                    cnt++
+                collectionOfMusicBands.remove(collectionOfMusicBands[i]);
+                cnt++
 
-                }
             }
+        }
 
-        when {
+        return when {
 
-            cnt == 0 -> Server.outt.write("Элемент по описанию не найден")
+            cnt == 0 -> Answer("Элемент по описанию не найден")
 
-            cnt == 1 -> Server.outt.write("Элемент удален")
+            cnt == 1 -> Answer("Элемент удален")
 
-            cnt >= 2 -> Server.outt.write("Элементы удалены")
+            cnt >= 2 -> Answer("Элементы удалены")
+
+            else -> Answer("Элемент по описанию не найден")
 
         }
-        Server.outt.flush();
     }
 
 
-    fun removeGreater(name : String){
+    fun removeGreater(name : String) : Answer {
 
         Server.logger.info("Выполнение команды remove_greater")
-            try {
+        var message : String = ""
+        try {
+
+            if(collectionOfMusicBands.isEmpty()) throw EmptyArgumentException()
+            for(i in collectionOfMusicBands.indices) {
 
 
-                if(collectionOfMusicBands.isEmpty()) throw EmptyArgumentException()
-                for(i in collectionOfMusicBands.indices) {
+                if (collectionOfMusicBands[i].name == name) {
 
-
-                    if (collectionOfMusicBands[i].name == name) {
-
-                        collectionOfMusicBands = collectionOfMusicBands.subList(0, i + 1);
-                        Server.outt.write("Элемент(ы) удален(ы)")
-                        Server.outt.flush()
-                        break;
-                    }
-
-                    if(i == collectionOfMusicBands.size - 1) Server.outt.write("Элемент не найден")
+                    collectionOfMusicBands = collectionOfMusicBands.subList(0, i + 1);
+                    message = ("Элемент(ы) удален(ы)")
+                    break;
                 }
 
-            }catch (e : EmptyArgumentException) {
-                Server.outt.write("Имя не найдено")
-            }finally{
-                Server.outt.flush();
+                if(i == collectionOfMusicBands.size - 1) message = "Элемент не найден"
             }
+
+        }catch (e : EmptyArgumentException) {
+            return Answer("Имя не найдено")
+        }
+
+        return Answer(message)
     }
 
 
 
-    fun countLessThan(numberOfParticipants : String){
+    fun countLessThan(numberOfParticipants : String) : Answer {
 
         Server.logger.info("Выполнение команды count_less_than_number_of_participants numberOfParticipants")
         try {
@@ -301,26 +288,27 @@ class CollectionManager {
                     cnt++;
                 }
             }
-            Server.outt.write(cnt)
+            return Answer(cnt.toString())
         }catch (e : NumberFormatException){
-            Server.outt.write("Данная строка не является числом")
+            return Answer("Данная строка не является числом")
         }catch (e : IllegalArgumentException){
-            Server.outt.write("Данная строка не является числом")
-        }finally {
-            Server.outt.flush();
+            return Answer("Данная строка не является числом")
         }
     }
 
-    fun printlnFrontManDescending(){
+    fun printlnFrontManDescending() : Answer {
 
+        val result = StringBuilder()
         Server.logger.info("Выполнение команды print_field_descending_front_man")
         val newCollection = collectionOfMusicBands.asReversed();
         for(i in newCollection.indices){
 
-            Server.outt.write(newCollection[i].frontMan.toString());
-            Server.outt.flush();
+            result.append(newCollection[i].frontMan.toString() + "\n")
 
         }
+
+        return Answer(result.toString())
     }
+
 
 }

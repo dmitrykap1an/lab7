@@ -4,7 +4,9 @@ import client.Managers.FileManager
 import general.commands.*
 import general.AppIO.CommandSerialize
 import main.resources.commands.*
-import server.Server
+import general.AppIO.Answer
+import server.serverWork.Server
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 
 /**
@@ -34,6 +36,7 @@ class CommandManager(
     private val MAXLENGTH = 6;
     private var commands : MutableList<Command> = mutableListOf();
     private var commandsHistory : MutableList<String> = mutableListOf();
+    private val readWriteLock = ReentrantReadWriteLock()
 
 
     init {
@@ -57,13 +60,13 @@ class CommandManager(
 
     fun addToHistory(command : String){
 
-            if(commandsHistory.size == 6) {
+        if(commandsHistory.size == 6) {
 
-                commandsHistory = commandsHistory.subList(1, MAXLENGTH)
-                commandsHistory.add(command);
+            commandsHistory = commandsHistory.subList(1, MAXLENGTH)
+            commandsHistory.add(command);
 
-            }
-            else commandsHistory.add(command);
+        }
+        else commandsHistory.add(command);
 
     }
 
@@ -80,19 +83,19 @@ class CommandManager(
 
     }
 
-    private fun help(){
+    private fun help() : Answer {
 
+        val result = StringBuilder()
+        for(i in commands.indices){
 
-            for(i in commands.indices){
-
-                Server.outt.write(commands[i].toString() + "\n")
+            result.append(commands[i].toString() + "\n")
 
         }
-        Server.outt.flush()
+        return Answer(result.toString())
     }
 
 
-    private fun executeScript(fileName : String){
+    private fun executeScript(fileName : String) : Answer {
 
         val list =  fileManager.scripReader(fileName);
         var i = 0;
@@ -126,73 +129,76 @@ class CommandManager(
                 }
             }
         }
+        return Answer("Команда executeScript выполнена")
     }
 
-    fun launchCommand(userCommand: CommandSerialize){
+    @Synchronized
+    fun launchCommand(userCommand: CommandSerialize) : Answer {
 
         when{
 
-            userCommand.getNameCommand() == "help"-> help()
+            userCommand.getNameCommand() == "help"-> return help()
 
-            userCommand.getNameCommand() == "info" ->  collectionManager.info()
+            userCommand.getNameCommand() == "info" ->  return collectionManager.info()
 
-            userCommand.getNameCommand() == "show" ->  collectionManager.show()
+            userCommand.getNameCommand() == "show" ->  return collectionManager.show()
 
-            userCommand.getNameCommand() == "add" -> collectionManager.add(userCommand.getMusicBand())
+            userCommand.getNameCommand() == "add" -> return collectionManager.add(userCommand.getMusicBand())
 
-            userCommand.getNameCommand() == "update" -> collectionManager.update(userCommand.getCommandArgument()!!, userCommand.getMusicBand())
+            userCommand.getNameCommand() == "update" -> return collectionManager.update(userCommand.getCommandArgument()!!, userCommand.getMusicBand())
 
-            userCommand.getNameCommand() == "remove_by_id" -> collectionManager.remove(userCommand.getCommandArgument()!!)
+            userCommand.getNameCommand() == "remove_by_id" -> return collectionManager.remove(userCommand.getCommandArgument()!!)
 
-            userCommand.getNameCommand() == "clear" -> collectionManager.clear()
+            userCommand.getNameCommand() == "clear" -> return collectionManager.clear()
 
-            userCommand.getNameCommand() == "execute_script" -> executeScript(userCommand.getCommandArgument()!!);
+//            userCommand.getNameCommand() == "execute_script" -> return executeScript(userCommand.getCommandArgument()!!);
 
 
             userCommand.getNameCommand() == "exit" -> {
 
-                Server.outt.write("Программа завершена")
                 Server.logger.info("Клиент завершил работу")
-                Server.outt.flush()
                 save();
-
+                return Answer("Программа завершена")
             }
 
-            userCommand.getNameCommand() == "remove_first" -> collectionManager.removeFirst()
+            userCommand.getNameCommand() == "remove_first" -> return collectionManager.removeFirst()
 
-            userCommand.getNameCommand() == "remove_greater" -> collectionManager.removeGreater(userCommand.getCommandArgument()!!);
+            userCommand.getNameCommand() == "remove_greater" -> return collectionManager.removeGreater(userCommand.getCommandArgument()!!);
 
-            userCommand.getNameCommand() == "history" -> history();
+            userCommand.getNameCommand() == "history" -> return history();
 
-            userCommand.getNameCommand() == "remove_all_by_description" -> collectionManager.removeAllByDescription(userCommand.getCommandArgument()!!);
+            userCommand.getNameCommand() == "remove_all_by_description" -> return collectionManager.removeAllByDescription(userCommand.getCommandArgument()!!);
 
-            userCommand.getNameCommand() == "count_less_than_number_of_participants" -> collectionManager.countLessThan(userCommand.getCommandArgument()!!);
+            userCommand.getNameCommand() == "count_less_than_number_of_participants" -> return collectionManager.countLessThan(userCommand.getCommandArgument()!!);
 
-            userCommand.getNameCommand() == "print_field_descending_front_man" -> collectionManager.printlnFrontManDescending();
+            userCommand.getNameCommand() == "print_field_descending_front_man" -> return collectionManager.printlnFrontManDescending();
 
             else -> {
-                Server.outt.write("Команда не найдена")
-                Server.outt.flush()
                 Server.logger.info("CommandManager : Команда не обнаружена");
+                return Answer("Команда не найдена")
             }
-
 
 
         }
+
+
+
     }
 
-    fun save(){
+    private fun save(){
 
         collectionManager.save()
 
     }
 
-    private fun history(){
+    private fun history() : Answer {
 
+        val result = StringBuilder()
         commandsHistory.forEach{
-            Server.outt.write(it + "\n");
+            result.append(it + "\n");
         }
-        Server.outt.flush();
+        return Answer(result.toString())
+
     }
 
 }
