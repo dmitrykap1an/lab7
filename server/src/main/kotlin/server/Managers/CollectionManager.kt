@@ -1,10 +1,10 @@
 package server.Managers
 
 import JavaClasses.MusicBand
-import client.Managers.FileManager
 import general.AppIO.InputData
 import general.Exceptions.EmptyArgumentException
 import general.AppIO.Answer
+import server.Database.PostgresDao
 import server.serverWork.Server
 import java.time.LocalDateTime
 import java.util.*
@@ -19,12 +19,15 @@ class CollectionManager {
     private var collectionOfMusicBands: MutableList<MusicBand> = LinkedList()
     private lateinit var lastSaveTime: LocalDateTime;
     private lateinit var lastInitTime: LocalDateTime;
-    private val fileManager: FileManager;
     private val inputData : InputData;
+    private val postgresDao : PostgresDao
 
-    constructor(fileManager: FileManager, inputData: InputData){
-        this.fileManager = fileManager;
+
+    constructor(inputData: InputData, postgresDao: PostgresDao){
+
         this.inputData = inputData
+        this.postgresDao = postgresDao
+
     }
 
 //
@@ -32,37 +35,40 @@ class CollectionManager {
 //        addFileCommandsToCollection()
 //    }
 
-    fun update(id: String, musicBand: MusicBand?, list: List<String> = listOf()) : Answer {
+    fun update(id: String, musicBand: MusicBand?, list: List<String> = listOf(), owner : String) : Answer {
 
         try {
 
-            val newId = id.toInt()
-            if(newId > collectionOfMusicBands.size || newId < 0){
+            if(postgresDao.update(id, musicBand, owner)){
+                val newId = id.toInt()
+                if(newId > collectionOfMusicBands.size || newId < 0){
 
 
-            } else {
-                for (i in collectionOfMusicBands.indices) {
+                } else {
+                    for (i in collectionOfMusicBands.indices) {
 
-                    if (collectionOfMusicBands[i].id == newId) {
+                        if (collectionOfMusicBands[i].id == newId) {
 
-                        if (list.isEmpty()) {
+                            if (list.isEmpty()) {
 
-                            collectionOfMusicBands[i] = musicBand!!;
-                            break;
+                                collectionOfMusicBands[i] = musicBand!!;
+                                break;
 
-                        } else {
+                            } else {
 
-                            val localParam = inputData.askMusicBand(list)
-                            if (localParam != null)
-                                collectionOfMusicBands[i] = localParam;
-                        };
+                                val localParam = inputData.askMusicBand(list)
+                                if (localParam != null)
+                                    collectionOfMusicBands[i] = localParam;
+                            };
 
-                        collectionOfMusicBands.stream().sorted(compareBy { it.name })
+                            collectionOfMusicBands.stream().sorted(compareBy { it.name })
 
+                        }
                     }
-                }
 
+                }
             }
+            else return Answer("Не удалось обновавить элемент")
         } catch (e : NumberFormatException) {
             return Answer("Данная строка не является числом")
         }catch (e : IllegalArgumentException) {
@@ -126,61 +132,65 @@ class CollectionManager {
 
         val result = StringBuilder()
         Server.logger.info("Выполнение команды show")
-        if (collectionOfMusicBands.size > 0) {
+        return if (collectionOfMusicBands.size > 0) {
             collectionOfMusicBands.stream().forEach {
                 result.append(it.toString() + "\n")
             }
 
-            return Answer(result.toString())
-        }
-        else {
-            return Answer("Коллекция пустая")
+            Answer(result.toString())
+        } else {
+            Answer("Коллекция пустая")
         }
 
 
     }
 
-    fun add(command : MusicBand?, list : List<String> = listOf()) : Answer {
+    fun add(command : MusicBand?, list : List<String> = listOf(), owner: String) : Answer {
 
         Server.logger.info("Выполнение команды add")
         val musicBand : MusicBand? = command ?: inputData.askMusicBand(list);
+        return if(postgresDao.add(musicBand, owner)) {
+            if (musicBand != null)
+                collectionOfMusicBands.add(musicBand);
+                collectionOfMusicBands.stream().sorted(compareBy { it.name })
+                lastInitTime = LocalDateTime.now();
 
-        if(musicBand != null)
-            collectionOfMusicBands.add(musicBand);
-        collectionOfMusicBands.stream().sorted(compareBy { it.name })
-        lastInitTime = LocalDateTime.now();
-
-        return Answer("Команда add выполнена")
-
-    }
-
-    fun clear() : Answer {
-
-        Server.logger.info("Выполнение команды clear")
-        collectionOfMusicBands.clear();
-        return Answer("Коллекция очищена")
+            Answer("Команда add выполнена")
+        } else Answer("Ошибка добавления музыльной группы")
 
     }
 
-    fun remove(id : String) : Answer {
+    fun clear(owner : String) : Answer {
 
-        Server.logger.info("Выполнение команды remove_by_id ")
+        if(postgresDao.clear(owner)) {
+            Server.logger.info("Выполнение команды clear")
+            collectionOfMusicBands.clear();
+            return Answer("Коллекция очищена")
+        }
+        else return Answer("Ошибка удаления элементов")
+
+    }
+
+    fun remove(id : String, owner: String) : Answer {
+
         try {
+            if(postgresDao.remove(id, owner)) {
+                Server.logger.info("Выполнение команды remove_by_id ")
+                val newId = id.toInt()
+                if (newId <= collectionOfMusicBands.size) {
 
-            val newId = id.toInt()
-            if(newId <= collectionOfMusicBands.size) {
+                    for (i in collectionOfMusicBands.indices) {
 
-                for (i in collectionOfMusicBands.indices) {
+                        if (collectionOfMusicBands[i].id == newId) {
 
-                    if (collectionOfMusicBands[i].id == newId) {
+                            collectionOfMusicBands.remove(collectionOfMusicBands[i])
+                            break;
+                        }
 
-                        collectionOfMusicBands.remove(collectionOfMusicBands[i])
-                        break;
+                        if (i == collectionOfMusicBands.size - 1) return Answer("Id не найден")
                     }
-
-                    if(i == collectionOfMusicBands.size - 1) return Answer("Id не найден")
-                }
-            } else return Answer("Id не найден")
+                } else return Answer("Id не найден")
+            }else return Answer("Ошибка удаления элемента по Id")
 
         } catch (e : NumberFormatException){
             return Answer("Данная строка не является числом")
@@ -191,83 +201,90 @@ class CollectionManager {
 
     }
 
-    fun save() : Answer {
+//    fun save() : Answer {
+//
+//        Server.logger.info("Выполнение команды save")
+//        fileManager.collectionWriter(collectionOfMusicBands);
+//        lastSaveTime = LocalDateTime.now();
+//        return Answer("Коллекция сохранена")
+//
+//
+//    }
 
-        Server.logger.info("Выполнение команды save")
-        fileManager.collectionWriter(collectionOfMusicBands);
-        lastSaveTime = LocalDateTime.now();
-        return Answer("Коллекция сохранена")
 
+    fun removeFirst(owner: String) : Answer {
+
+        return if(postgresDao.removeFirst(owner)){
+            Server.logger.info("Выполнение команды remove_first")
+            if(collectionOfMusicBands.size > 0) {
+
+                collectionOfMusicBands.remove(collectionOfMusicBands[0]);
+                Answer("Первый элемент удален")
+            } else {
+                Answer("Невозможно удалить первый элемент - коллекция пуста")
+            }
+        } else Answer("Удаление первого элемента невозможно")
 
     }
 
-
-    fun removeFirst() : Answer {
-
-        Server.logger.info("Выполнение команды remove_first")
-        if(collectionOfMusicBands.size > 0) {
-
-            collectionOfMusicBands.remove(collectionOfMusicBands[0]);
-            return Answer("Первый элемент удален")
-        }
-        else {
-            return Answer("Невозможно удалить первый элемент - коллекция пуста")
-        }
-
-    }
-
-    fun removeAllByDescription(description : String) : Answer {
+    fun removeAllByDescription(description : String, owner: String) : Answer {
 
         Server.logger.info("Выполнение команды remove_all_by_description")
         var cnt = 0;
 
-        for (i in collectionOfMusicBands.indices) {
+        if (postgresDao.removeAllByDescription(description, owner)) {
+            for (i in collectionOfMusicBands.indices) {
 
-            if (collectionOfMusicBands[i].description.equals(description)) {
+                if (collectionOfMusicBands[i].description.equals(description)) {
 
-                collectionOfMusicBands.remove(collectionOfMusicBands[i]);
-                cnt++
+                    collectionOfMusicBands.remove(collectionOfMusicBands[i]);
+                    cnt++
+
+                }
+            }
+
+            return when {
+
+                cnt == 0 -> Answer("Элемент по описанию не найден")
+
+                cnt == 1 -> Answer("Элемент удален")
+
+                cnt >= 2 -> Answer("Элементы удалены")
+
+                else -> Answer("Элемент по описанию не найден")
 
             }
         }
-
-        return when {
-
-            cnt == 0 -> Answer("Элемент по описанию не найден")
-
-            cnt == 1 -> Answer("Элемент удален")
-
-            cnt >= 2 -> Answer("Элементы удалены")
-
-            else -> Answer("Элемент по описанию не найден")
-
-        }
+        else return Answer("Ошибка удаления всех элементов по описанию")
     }
 
 
-    fun removeGreater(name : String) : Answer {
+    fun removeGreater(name : String, owner: String) : Answer {
 
         Server.logger.info("Выполнение команды remove_greater")
         var message : String = ""
         try {
+            if (postgresDao.removeGreater(name, owner)) {
 
-            if(collectionOfMusicBands.isEmpty()) throw EmptyArgumentException()
-            for(i in collectionOfMusicBands.indices) {
+                if (collectionOfMusicBands.isEmpty()) throw EmptyArgumentException()
 
+                for (i in collectionOfMusicBands.indices) {
 
-                if (collectionOfMusicBands[i].name == name) {
+                    if (collectionOfMusicBands[i].name == name) {
 
-                    collectionOfMusicBands = collectionOfMusicBands.subList(0, i + 1);
-                    message = ("Элемент(ы) удален(ы)")
-                    break;
+                        collectionOfMusicBands = collectionOfMusicBands.subList(0, i + 1);
+                        message = ("Элемент(ы) удален(ы)")
+                        break;
+                    }
+
+                    if (i == collectionOfMusicBands.size - 1) message = "Элемент не найден"
                 }
-
-                if(i == collectionOfMusicBands.size - 1) message = "Элемент не найден"
             }
+            else return Answer("Удаление элементов больше данного невозможно")
 
-        }catch (e : EmptyArgumentException) {
-            return Answer("Имя не найдено")
-        }
+            } catch (e : EmptyArgumentException) {
+                return Answer("Имя не найдено")
+            }
 
         return Answer(message)
     }

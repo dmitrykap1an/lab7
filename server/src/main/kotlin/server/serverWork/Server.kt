@@ -24,8 +24,6 @@ class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Run
     private  val PORT : Int = port
     private var server : ServerSocketChannel? = null// серверный сокет
     private val semaphore = Semaphore(2)
-    private val BUFFERSIZE = 1024
-    private lateinit var selector: Selector;
     private val executor = Executors.newFixedThreadPool(10);
         companion object{
         internal val logger  = LogManager.getLogger(Server::class)

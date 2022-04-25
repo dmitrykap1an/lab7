@@ -16,7 +16,8 @@ class PasswordHasher {
                 val messageDigest = MessageDigest.getInstance("SHA-256")
                 val bytes = messageDigest.digest(password.toByteArray(Charsets.UTF_8))
                 val temp = messageDigest.digest(bytes)
-                return BigInteger(1, temp).toString()
+                val result = BigInteger(1, temp) + BigInteger(1, salt.toByteArray())
+                return result.toString()
 
             } catch (e: NoSuchAlgorithmException) {
                 Server.logger.error("Не найден алгоритм хэширования пароля!")

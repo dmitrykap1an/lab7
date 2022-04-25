@@ -4,16 +4,16 @@ import JavaClasses.MusicBand
 
 abstract class Dao{
 
-    abstract fun update(id: String, musicBand: MusicBand?)
-    abstract fun add(command : MusicBand?)
-    abstract fun show()
-    abstract fun clear()
-    abstract fun remove(id : String)
-    abstract fun removeFirst()
-    abstract fun removeAllByDescription(description : String)
-    abstract fun removeGreater(name : String)
-    abstract fun countLessThan(numberOfParticipants : String)
-    abstract fun printlnFrontManDescending()
+    abstract fun update(id: String, musicBand: MusicBand?, owner : String) : Boolean
+    abstract fun add(command : MusicBand?, owner: String) : Boolean
+//    abstract fun show() : Boolean
+    abstract fun clear(owner: String) : Boolean
+    abstract fun remove(id : String, owner: String) : Boolean
+    abstract fun removeFirst(owner: String) : Boolean
+    abstract fun removeAllByDescription(description : String, owner: String) : Boolean
+    abstract fun removeGreater(name : String, owner: String) : Boolean
+//    abstract fun countLessThan(numberOfParticipants : String)
+//    abstract fun printlnFrontManDescending()
 
 
 }

@@ -95,45 +95,45 @@ class CommandManager(
     }
 
 
-    private fun executeScript(fileName : String) : Answer {
-
-        val list =  fileManager.scripReader(fileName);
-        var i = 0;
-        while(i < list.size){
-
-            val localList = list[i].split(' ')
-            if(localList[0] in getCommandsString()){
-
-
-                when{
-
-                    localList[0] == "add" && localList.size == 1-> {
-                        collectionManager.add(null, list.subList(i + 1, i + 12));
-                        i += 12;
-                    };
-
-                    localList[0] == "update" && localList.size == 2 -> {
-
-                        collectionManager.update(localList[1], null, list.subList(i + 1, i + 12))
-                        i += 12;
-
-                    }
-
-                    else ->{
-
-                        if(localList.size == 1) launchCommand(CommandSerialize(localList[0]))
-                        else launchCommand(CommandSerialize(localList[0], localList[1]))
-                        i += 1;
-
-                    }
-                }
-            }
-        }
-        return Answer("Команда executeScript выполнена")
-    }
+//    private fun executeScript(fileName : String) : Answer {
+//
+//        val list =  fileManager.scripReader(fileName);
+//        var i = 0;
+//        while(i < list.size){
+//
+//            val localList = list[i].split(' ')
+//            if(localList[0] in getCommandsString()){
+//
+//
+//                when{
+//
+//                    localList[0] == "add" && localList.size == 1-> {
+//                        collectionManager.add(null, list.subList(i + 1, i + 12));
+//                        i += 12;
+//                    };
+//
+//                    localList[0] == "update" && localList.size == 2 -> {
+//
+//                        collectionManager.update(localList[1], null, list.subList(i + 1, i + 12))
+//                        i += 12;
+//
+//                    }
+//
+//                    else ->{
+//
+//                        if(localList.size == 1) launchCommand(CommandSerialize(localList[0]))
+//                        else launchCommand(CommandSerialize(localList[0], localList[1]))
+//                        i += 1;
+//
+//                    }
+//                }
+//            }
+//        }
+//        return Answer("Команда executeScript выполнена")
+//    }
 
     @Synchronized
-    fun launchCommand(userCommand: CommandSerialize) : Answer {
+    fun launchCommand(userCommand: CommandSerialize, owner : String) : Answer {
 
         when{
 
@@ -143,13 +143,13 @@ class CommandManager(
 
             userCommand.getNameCommand() == "show" ->  return collectionManager.show()
 
-            userCommand.getNameCommand() == "add" -> return collectionManager.add(userCommand.getMusicBand())
+            userCommand.getNameCommand() == "add" -> return collectionManager.add(userCommand.getMusicBand(), owner = owner)
 
-            userCommand.getNameCommand() == "update" -> return collectionManager.update(userCommand.getCommandArgument()!!, userCommand.getMusicBand())
+            userCommand.getNameCommand() == "update" -> return collectionManager.update(userCommand.getCommandArgument()!!, userCommand.getMusicBand(), owner = owner)
 
-            userCommand.getNameCommand() == "remove_by_id" -> return collectionManager.remove(userCommand.getCommandArgument()!!)
+            userCommand.getNameCommand() == "remove_by_id" -> return collectionManager.remove(userCommand.getCommandArgument()!!, owner)
 
-            userCommand.getNameCommand() == "clear" -> return collectionManager.clear()
+            userCommand.getNameCommand() == "clear" -> return collectionManager.clear(owner)
 
 //            userCommand.getNameCommand() == "execute_script" -> return executeScript(userCommand.getCommandArgument()!!);
 
@@ -157,17 +157,17 @@ class CommandManager(
             userCommand.getNameCommand() == "exit" -> {
 
                 Server.logger.info("Клиент завершил работу")
-                save();
+//                save();
                 return Answer("Программа завершена")
             }
 
-            userCommand.getNameCommand() == "remove_first" -> return collectionManager.removeFirst()
+            userCommand.getNameCommand() == "remove_first" -> return collectionManager.removeFirst(owner)
 
-            userCommand.getNameCommand() == "remove_greater" -> return collectionManager.removeGreater(userCommand.getCommandArgument()!!);
+            userCommand.getNameCommand() == "remove_greater" -> return collectionManager.removeGreater(userCommand.getCommandArgument()!!, owner);
 
             userCommand.getNameCommand() == "history" -> return history();
 
-            userCommand.getNameCommand() == "remove_all_by_description" -> return collectionManager.removeAllByDescription(userCommand.getCommandArgument()!!);
+            userCommand.getNameCommand() == "remove_all_by_description" -> return collectionManager.removeAllByDescription(userCommand.getCommandArgument()!!, owner);
 
             userCommand.getNameCommand() == "count_less_than_number_of_participants" -> return collectionManager.countLessThan(userCommand.getCommandArgument()!!);
 
@@ -185,11 +185,11 @@ class CommandManager(
 
     }
 
-    private fun save(){
-
-        collectionManager.save()
-
-    }
+//    private fun save(){
+//
+//        collectionManager.save()
+//
+//    }
 
     private fun history() : Answer {
 

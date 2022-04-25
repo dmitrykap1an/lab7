@@ -46,7 +46,7 @@ class MonoHandler : Runnable{
             println("Команда ${command.getNameCommand()} принята от $nameOfUser")
             Server.logger.info("Команда принята")
             commandManager.addToHistory(command.getNameCommand())
-            val answer = commandManager.launchCommand(command)
+            val answer = commandManager.launchCommand(command, nameOfUser)
             outt.writeObject(answer)
         } catch (e: EOFException) {
             println("Ошибка конца ввода")

@@ -1,6 +1,9 @@
 package JavaClasses;
 
 import java.io.Serializable;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Clock;
 import java.time.LocalDate;
 
 
@@ -8,7 +11,7 @@ public class MusicBand implements Serializable {
     private int id;
     private String name;
     private Coordinates coordinates;
-    private java.time.LocalDate creationDate;
+    private Timestamp creationDate;
     private Long numberOfParticipants;
     private String description;
     private MusicGenre genre;
@@ -20,7 +23,7 @@ public class MusicBand implements Serializable {
 
        this.name = name;
        this.coordinates = coordinates;
-       this.creationDate = LocalDate.now();
+       this.creationDate = new Timestamp(System.currentTimeMillis());
        this.numberOfParticipants = numberOfParticipants;
        this.description = description;
        this.genre = genre;
@@ -69,7 +72,7 @@ public class MusicBand implements Serializable {
        return coordinates;
     }
 
-    public LocalDate getCreationDate(){
+    public Timestamp getCreationDate(){
        return creationDate;
     }
 
@@ -78,16 +81,16 @@ public class MusicBand implements Serializable {
     }
 
 
-        @Override
-        public String toString(){
+    @Override
+    public String toString(){
 
-            return "Id ������ : " + id +
-                    "\n�������� ������ : " + name +
-                    "\n���� �������� �������� : " +  creationDate.toString() +
-                    "\n���������� �������������� ������ : " + coordinates.toString() +
-                    "\n���������� ���������� : " + numberOfParticipants +
-                    "\n�������� ������ : " + description +
-                    "\n����������� ���� : " + genre.toString() +
-                    "\n������ : " + frontMan;
-        }
+        return "Id группы : " + id +
+                "\nНазвание группы : " + name +
+                "\nДата создания элемента : " +  creationDate.toString() +
+                "\nКоординаты местоположения группы : " + coordinates.toString() +
+                "\nКоличество участников : " + numberOfParticipants +
+                "\nОписание группы : " + description +
+                "\nМузыкальный жанр : " + genre.toString() +
+                "\nСолист : " + frontMan;
+    }
 }
