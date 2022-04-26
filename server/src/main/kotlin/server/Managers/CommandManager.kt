@@ -18,7 +18,6 @@ class CommandManager(
     private val addCommand: AddCommand,
     private val clearCommand: ClearCommand,
     private val countCommand: CountCommand,
-    private val executeScriptCommand: ExecuteScriptCommand,
     private val historyCommand: HistoryCommand,
     private val infoCommand: InfoCommand,
     private val printFieldCommand: PrintFieldCommand,
@@ -30,13 +29,11 @@ class CommandManager(
     private val updateIDCommand: UpdateIDCommand,
     private val exitCommand : ExitCommand,
     private val collectionManager: CollectionManager,
-    private val fileManager: FileManager
 ) {
 
     private val MAXLENGTH = 6;
     private var commands : MutableList<Command> = mutableListOf();
     private var commandsHistory : MutableList<String> = mutableListOf();
-    private val readWriteLock = ReentrantReadWriteLock()
 
 
     init {
@@ -44,7 +41,6 @@ class CommandManager(
         commands.add(addCommand)
         commands.add(clearCommand)
         commands.add(countCommand)
-        commands.add(executeScriptCommand)
         commands.add(historyCommand)
         commands.add(infoCommand)
         commands.add(printFieldCommand)
@@ -58,7 +54,7 @@ class CommandManager(
     }
 
 
-    fun addToHistory(command : String){
+    fun addToHistory(command : String, nameOfUser : String){
 
         if(commandsHistory.size == 6) {
 
@@ -66,22 +62,9 @@ class CommandManager(
             commandsHistory.add(command);
 
         }
-        else commandsHistory.add(command);
+        else commandsHistory.add("$command : $nameOfUser");
 
     }
-
-//    private fun getCommandsString() : MutableList<String>{
-//
-//        val commandsString = mutableListOf<String>();
-//        for(i in commands.indices){
-//
-//            commandsString.add(commands[i].getNameCommand().split(' ')[0])
-//
-//        }
-//
-//        return commandsString;
-//
-//    }
 
     private fun help() : Answer {
 
@@ -94,43 +77,6 @@ class CommandManager(
         return Answer(result.toString())
     }
 
-
-//    private fun executeScript(fileName : String) : Answer {
-//
-//        val list =  fileManager.scripReader(fileName);
-//        var i = 0;
-//        while(i < list.size){
-//
-//            val localList = list[i].split(' ')
-//            if(localList[0] in getCommandsString()){
-//
-//
-//                when{
-//
-//                    localList[0] == "add" && localList.size == 1-> {
-//                        collectionManager.add(null, list.subList(i + 1, i + 12));
-//                        i += 12;
-//                    };
-//
-//                    localList[0] == "update" && localList.size == 2 -> {
-//
-//                        collectionManager.update(localList[1], null, list.subList(i + 1, i + 12))
-//                        i += 12;
-//
-//                    }
-//
-//                    else ->{
-//
-//                        if(localList.size == 1) launchCommand(CommandSerialize(localList[0]))
-//                        else launchCommand(CommandSerialize(localList[0], localList[1]))
-//                        i += 1;
-//
-//                    }
-//                }
-//            }
-//        }
-//        return Answer("Команда executeScript выполнена")
-//    }
 
     @Synchronized
     fun launchCommand(userCommand: CommandSerialize, owner : String) : Answer {

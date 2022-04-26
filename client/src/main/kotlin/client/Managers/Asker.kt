@@ -58,21 +58,19 @@ class Asker {
 
         fun askQuestion(text: String): Boolean {
 
-            println("$text Д/н")
+            println("$text [Д/н]")
 
             while (true) {
 
                 try {
-                    when (readLine()!!.trim().uppercase(Locale.getDefault())) {
+                    return when (readLine()!!.trim().uppercase(Locale.getDefault())) {
                         "ДА", "Д", "+", "" -> {
-                            return true
-                            break;
+                            true
                         }
 
                         "НЕТ", "Н", "-" -> {
 
-                            return false
-                            break;
+                            false
                         }
                         else -> throw AnswerException()
                     }

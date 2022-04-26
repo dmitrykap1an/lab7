@@ -24,20 +24,16 @@ fun main(){
     val properties = Properties()
     val file = FileReader("/home/newton/IdeaProjects/lab6-master/server/src/main/kotlin/server/databaseInfo.properties")
     properties.load(file)
-    val outputData = "outputData";
 
     val databaseConnection = DatabaseConnection(properties);
-    val moduleOfFileManager = ModuleOfFileManager(outputData)
     val moduleOfPostgresDao = ModuleOfPostgresDao(databaseConnection)
-    val moduleOfCollectionManager = ModuleOfCollectionManager(moduleOfFileManager, moduleOfPostgresDao)
+    val moduleOfCollectionManager = ModuleOfCollectionManager(moduleOfPostgresDao)
     val moduleOfCommandManager = ModuleOfCommandManager(
         moduleOfCollectionManager,
-        moduleOfFileManager ,
         HelpCommand(),
         AddCommand(),
         ClearCommand(),
         CountCommand(),
-        ExecuteScriptCommand(),
         HistoryCommand(),
         InfoCommand(),
         PrintFieldCommand(),
@@ -50,7 +46,7 @@ fun main(){
         ExitCommand()
     )
     val commandManager = moduleOfCommandManager.commandManager()
-  val server =  Server(commandManager, 4004, 5)
+  val server =  Server(commandManager, 4004)
     server.run()
 
 

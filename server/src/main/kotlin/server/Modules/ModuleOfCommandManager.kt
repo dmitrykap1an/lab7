@@ -10,15 +10,13 @@ import server.Managers.CollectionManager
 import server.Managers.CommandManager
 
 
-@UseModules(ModuleOfCollectionManager::class, ModuleOfFileManager::class)
+@UseModules(ModuleOfCollectionManager::class)
 class ModuleOfCommandManager(
     private val moduleOfCollectionManager: ModuleOfCollectionManager,
-    private val moduleOfFileManager: ModuleOfFileManager,
     private val helpCommand: HelpCommand,
     private val addCommand: AddCommand,
     private val clearCommand: ClearCommand,
     private val countCommand: CountCommand,
-    private val executeScriptCommand: ExecuteScriptCommand,
     private val historyCommand: HistoryCommand,
     private val infoCommand: InfoCommand,
     private val printFieldCommand: PrintFieldCommand,
@@ -36,9 +34,6 @@ class ModuleOfCommandManager(
 
     @ProvideSingle
     private fun collectionManager() : CollectionManager;
-
-    @ProvideSingle
-    private fun fileManager() : FileManager;
 
 
 }

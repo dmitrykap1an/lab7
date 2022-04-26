@@ -9,12 +9,9 @@ import general.AppIO.InputData
 import server.Database.PostgresDao
 import server.Managers.CollectionManager
 
-@UseModules(ModuleOfFileManager::class, ModuleOfPostgresDao::class)
-class ModuleOfCollectionManager(private val moduleOfFileManager: ModuleOfFileManager, private val moduleOfPostgresDao: ModuleOfPostgresDao) {
+@UseModules(ModuleOfPostgresDao::class)
+class ModuleOfCollectionManager(private val moduleOfPostgresDao: ModuleOfPostgresDao) {
 
-
-    @ProvideSingle
-    private fun fileManager() : FileManager
 
     @CreateSingle
     private fun inputData() : InputData

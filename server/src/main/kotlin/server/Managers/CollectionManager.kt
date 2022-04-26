@@ -142,7 +142,7 @@ class CollectionManager {
         Server.logger.info("Выполнение команды show")
         return if (collectionOfMusicBands.size > 0) {
             collectionOfMusicBands.stream().forEach {
-                result.append(it.toString() + "\n")
+                result.append(it.toString() + "\n" + "\n")
             }
 
             Answer(result.toString())
@@ -164,7 +164,7 @@ class CollectionManager {
                 collectionOfMusicBands.stream().sorted(compareBy { it.name })
                 lastInitTime = LocalDateTime.now();
 
-                Answer("Команда add выполнена")
+                Answer("")
             } else Answer("Ошибка добавления музыльной группы")
         }
         finally {

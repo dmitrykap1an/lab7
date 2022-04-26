@@ -17,7 +17,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 
-class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Runnable{
+class Server(commandManager: CommandManager, port : Int) : Runnable{
 
     private lateinit var clientSocket : SocketChannel//сокет для общения
     private var commandManager : CommandManager = commandManager
@@ -46,6 +46,7 @@ class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Run
                 println("Соединение потеряно")
             } catch (e: UninitializedPropertyAccessException) {
                 println("Клиентский сокет не был создан")
+                openServer()
             } catch (e: NullPointerException) {
                 println("Соединение с клиентом не было создано")
             }
@@ -65,38 +66,23 @@ class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Run
     }
 
 
-//    private fun serverStop() {
-//        try {
-//            logger.info("Завершение работы сервера...")
-//            println("Завершение работы сервера...")
-//            if (server == null) throw CloseSocketException()
-//            clientSocket.close()
-////            server!!.close()
-//            println("Работа сервера успешно завершена.")
-//            logger.info("Работа сервера успешно завершена.")
-//        } catch (e : CloseSocketException) {
-//            println("Невозможно завершить работу сервера : сервер изначально был закрыт!")
-//            logger.error("Невозможно завершить работу сервера : сервер изначально был закрыт!")
-//        } catch (e : IOException) {
-//            println("Произошла ошибка при завершении работы сервера!")
-//            logger.error("Произошла ошибка при завершении работы сервера!")
-//        }
-//    }
-
     private fun openServer() {
-        try {
-            logger.info("Запуск сервера...")
-            println("Запуск сервера...")
-            server = ServerSocketChannel.open()
-            server!!.socket().bind(InetSocketAddress(4004))
-            logger.info("Сервер успешно запущен.")
-            println("Сервер успешно запущен.")
-        } catch (e: IOException) {
-            logger.fatal("Произошла ошибка при попытке использовать порт '$PORT'!")
-            println("Произошла ошибка при попытке использовать порт '$PORT'!")
-        }
-        catch (e : NullPointerException){
-            println("Ошибка соединения")
+        while (true) {
+            try {
+                logger.info("Запуск сервера...")
+                println("Запуск сервера...")
+                server = ServerSocketChannel.open()
+                server!!.socket().bind(InetSocketAddress(4004))
+                logger.info("Сервер успешно запущен.")
+                println("Сервер успешно запущен.")
+                break
+            } catch (e: IOException) {
+                logger.fatal("Произошла ошибка при попытке использовать порт '$PORT'!")
+                println("Произошла ошибка при попытке использовать порт '$PORT'!")
+                Thread.sleep(5000L)
+            } catch (e: NullPointerException) {
+                println("Ошибка соединения")
+            }
         }
     }
 

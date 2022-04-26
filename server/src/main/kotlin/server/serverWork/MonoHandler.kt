@@ -51,7 +51,7 @@ class MonoHandler : Runnable{
             val command = futureOne.get()
             println("Команда ${command.getNameCommand()} принята от $nameOfUser")
             Server.logger.info("Команда принята")
-            commandManager.addToHistory(command.getNameCommand())
+            commandManager.addToHistory(command.getNameCommand(), nameOfUser)
             val future = executor.submit(CollectionRequester(commandManager, command, nameOfUser))
             val answer = future.get()
             val futureTwo = executor.submit(ObjectWriter(outt, answer))
