@@ -10,7 +10,7 @@ fun main(){
     val inputData = InputData()
     val moduleOfCommandFinder = ModuleOfCommandFinder(inputData)
     val commandFinder = moduleOfCommandFinder.commandFinder()
-    val client = Client(commandFinder, 4004, "localhost");
+    val client = Client(commandFinder,  4004, "localhost");
     client.run()
 
 }

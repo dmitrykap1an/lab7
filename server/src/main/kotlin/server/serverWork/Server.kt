@@ -24,7 +24,7 @@ class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Run
     private  val PORT : Int = port
     private var server : ServerSocketChannel? = null// серверный сокет
     private val semaphore = Semaphore(2)
-    private val executor = Executors.newFixedThreadPool(10);
+    private val executor = Executors.newCachedThreadPool();
         companion object{
         internal val logger  = LogManager.getLogger(Server::class)
 
@@ -39,7 +39,8 @@ class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Run
             try {
                     asquirePool()
                     connectToClient()
-                    executor.submit(ConnectionRequest(clientSocket, commandManager))
+                    executor.submit(ConnectionRequest(clientSocket, commandManager, executor))
+                    releasePool()
             } catch (e: SocketException) {
                 logger.error("Потеряно соединение")
                 println("Соединение потеряно")
@@ -64,23 +65,23 @@ class Server(commandManager: CommandManager, port : Int, maxClients : Int) : Run
     }
 
 
-    private fun serverStop() {
-        try {
-            logger.info("Завершение работы сервера...")
-            println("Завершение работы сервера...")
-            if (server == null) throw CloseSocketException()
-            clientSocket.close()
-//            server!!.close()
-            println("Работа сервера успешно завершена.")
-            logger.info("Работа сервера успешно завершена.")
-        } catch (e : CloseSocketException) {
-            println("Невозможно завершить работу сервера : сервер изначально был закрыт!")
-            logger.error("Невозможно завершить работу сервера : сервер изначально был закрыт!")
-        } catch (e : IOException) {
-            println("Произошла ошибка при завершении работы сервера!")
-            logger.error("Произошла ошибка при завершении работы сервера!")
-        }
-    }
+//    private fun serverStop() {
+//        try {
+//            logger.info("Завершение работы сервера...")
+//            println("Завершение работы сервера...")
+//            if (server == null) throw CloseSocketException()
+//            clientSocket.close()
+////            server!!.close()
+//            println("Работа сервера успешно завершена.")
+//            logger.info("Работа сервера успешно завершена.")
+//        } catch (e : CloseSocketException) {
+//            println("Невозможно завершить работу сервера : сервер изначально был закрыт!")
+//            logger.error("Невозможно завершить работу сервера : сервер изначально был закрыт!")
+//        } catch (e : IOException) {
+//            println("Произошла ошибка при завершении работы сервера!")
+//            logger.error("Произошла ошибка при завершении работы сервера!")
+//        }
+//    }
 
     private fun openServer() {
         try {

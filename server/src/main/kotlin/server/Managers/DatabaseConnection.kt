@@ -5,9 +5,10 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.util.Properties
+import kotlin.system.exitProcess
 
 class DatabaseConnection {
-    private val url : String = "jdbc:postgresql://localhost:5432/studs"
+    private val url : String = "jdbc:postgresql://localhost:1441/studs"
     private val properties : Properties;
     var connection: Connection? = null
 
@@ -25,8 +26,8 @@ class DatabaseConnection {
                     println("Подключение к базе данных прошло успешно")
 
                 } catch (e: SQLException) {
-                    println(e.message)
                     println("Ошибка подключение к базе данных")
+                    closeConnection()
                 }
 
 
@@ -35,7 +36,7 @@ class DatabaseConnection {
     }
 
 
-    fun closeConnection() {
+    private fun closeConnection() {
         if (connection != null) {
             try {
                 connection!!.close()
@@ -44,7 +45,12 @@ class DatabaseConnection {
             } catch (exception: SQLException) {
                 println("Произошла ошибка при разрыве соединения с базой данных!")
                 Server.logger.error("Произошла ошибка при разрыве соединения с базой данных!")
+                exitProcess(0)
             }
+        }
+        else{
+            println("Закрытие сервера")
+                exitProcess(0)
         }
     }
 

@@ -1,6 +1,7 @@
 package server.Database
 
 import JavaClasses.*
+import org.postgresql.util.PSQLException
 import server.Managers.DatabaseConnection
 import java.sql.Connection
 import java.sql.ResultSet
@@ -132,15 +133,19 @@ class PostgresDao : Dao{
 
 
     override fun addMusicBandsToCollection() : MutableList<MusicBand>{
-
         val musicBands = mutableListOf<MusicBand>()
-        val statement = connection.prepareStatement("SELECT * FROM musicbands")
-        val rs = statement.executeQuery()
-        while(rs.next()){
-            musicBands.add(createMusicBand(rs))
-        }
+        return try {
+            val statement = connection.prepareStatement("SELECT * FROM musicbands")
+            val rs = statement.executeQuery()
+            while (rs.next()) {
+                musicBands.add(createMusicBand(rs))
+            }
 
-        return musicBands
+            musicBands
+        }catch (e : PSQLException){
+            println("Поле не существует")
+            musicBands
+        }
     }
     override fun remove(id: String, owner: String) : Boolean{
 

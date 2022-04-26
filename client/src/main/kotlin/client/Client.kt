@@ -30,10 +30,7 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
         openClient()
         while (true) {
             try {
-                if(Thread.interrupted()) break
                 requestToServer()
-
-
             } catch (e: UninitializedPropertyAccessException) {
                 println("Сервер не доступен")
                 println("Время ожидания 5 секунд")
@@ -82,7 +79,8 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
             }
         }catch (e : IOException){
             println("Связь потеряна")
-            Thread.currentThread().interrupt()
+            println("Попытка восставновить подлючение")
+            openClient()
         }
     }
 

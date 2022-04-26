@@ -5,14 +5,14 @@ import general.AppIO.Answer
 import org.postgresql.util.PSQLException
 import server.Database.PasswordHasher
 import server.Managers.CommandManager
-import java.io.IOException
+import java.io.FileReader
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.net.Socket
-import java.net.SocketTimeoutException
 import java.nio.channels.*
 import java.sql.Connection
 import java.sql.DriverManager
+import java.util.*
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
@@ -21,14 +21,15 @@ class ConnectionRequest : Runnable {
     private var clientSocket : SocketChannel
     private val commandManager : CommandManager
     private lateinit var nameOfUser : String;
-    private val executor = Executors.newFixedThreadPool(10)
+    private val executor : ExecutorService
     private val semaphore = Semaphore(1, false)
     private lateinit var outt: ObjectOutputStream
     private lateinit var inn: ObjectInputStream
 
-    constructor(clientSocket : SocketChannel, commandManager: CommandManager){
+    constructor(clientSocket : SocketChannel, commandManager: CommandManager, executor : ExecutorService){
         this.clientSocket = clientSocket
         this.commandManager = commandManager
+        this.executor = executor
     }
 
     override fun run(){
@@ -45,9 +46,13 @@ class ConnectionRequest : Runnable {
         asquirePool()
         while(!registrationStatus){
 
-            val user = inn.readObject() as UserSerialize
-            val url = "jdbc:postgresql://localhost:5432/studs"
-            val connection = DriverManager.getConnection(url)
+            val properties = Properties()
+            val file = FileReader("/home/newton/IdeaProjects/lab6-master/server/src/main/kotlin/server/databaseInfo.properties")
+            properties.load(file)
+            val future = executor.submit(ObjectReader<UserSerialize>(inn))
+            val user = future.get()
+            val url = "jdbc:postgresql://localhost:1441/studs"
+            val connection = DriverManager.getConnection(url, properties)
             if(user.getTypeOfAuth() == "Registered"){
                 checkRegistration(connection, user)
             }
@@ -87,16 +92,17 @@ class ConnectionRequest : Runnable {
                                 println("Пользователь '${user.getName()}' обнаружен")
                                 nameOfUser = user.getName()
                                 Server.logger.info("Пользователь '${user.getName()}' обнаружен")
-                                outt.writeObject(Answer("OK"))
-                                outt.flush()
-
+                                val answer = Answer("OK")
+                                val future = executor.submit(ObjectWriter(outt, answer))
+                                val result = future.get()
                                 registrationStatus = true;
                             }
                             else{
                                 println("Пользователь '${user.getName()}' не существует")
-                                outt.writeObject(Answer("Пользователь '${user.getName()}' не существует"))
+                                val answer = Answer("Пользователь '${user.getName()}' не существует")
+                                val future = executor.submit(ObjectWriter(outt, answer))
+                                val result = future.get()
                                 Server.logger.info("Пользователь '${user.getName()}' не существует")
-                                outt.flush()
                             }
                         }
                         catch(e : NumberFormatException){
@@ -107,14 +113,16 @@ class ConnectionRequest : Runnable {
             }
             else{
                 println("Пользователь '${user.getName()}' не существует")
-                outt.writeObject(Answer("Пользователь '${user.getName()}' не существует"))
+                val answer = Answer("Пользователь '${user.getName()}' не существует")
+                val future = executor.submit(ObjectWriter(outt, answer))
+                val result = future.get()
                 Server.logger.info("Пользователь '${user.getName()}' не существует")
-                outt.flush()
             }
 
         }catch (e : PSQLException){
-            outt.writeObject(Answer("Пользователь '${user.getName()}' не существует"))
-            outt.flush();
+            val answer = Answer("Пользователь '${user.getName()}' не существует")
+            val future = executor.submit(ObjectWriter(outt, answer))
+            val result = future.get()
             Server.logger.error("Пользователь '${user.getName()}' не существует")
         }
     }
@@ -130,8 +138,9 @@ class ConnectionRequest : Runnable {
                 val cnt = rs.getInt("count")
                 if(cnt > 0){
                     println("Пользователь '${user.getName()}' уже существует")
-                    outt.writeObject(Answer("Существует"))
-                    outt.flush()
+                    val answer = Answer("Существует")
+                    val future = executor.submit(ObjectWriter(outt, answer))
+                    val result = future.get()
                     Server.logger.info("Пользователь '${user.getName()}' уже существует")
                 }
                 else {
@@ -149,14 +158,16 @@ class ConnectionRequest : Runnable {
                     println("Пользователь добавлен")
                     println("Регистрация прошла успешно")
                     nameOfUser = user.getName()
-                    outt.writeObject(Answer("Регистрация прошла успешно"))
-                    outt.flush()
+                    val answer = Answer("Регистрация прошла успешно")
+                    val future = executor.submit(ObjectWriter(outt, answer))
+                    val result = future.get()
                     registrationStatus = true
                     Server.logger.info("Регистрация прошла успешно")
                 }
             }catch (_: PSQLException){
-                outt.writeObject(Answer("Регистрация прошла успешно"))
-                outt.flush()
+                val answer = Answer("Регистрация прошла успешно")
+                val future = executor.submit(ObjectWriter(outt, answer))
+                val result = future.get()
             }
         }
     }

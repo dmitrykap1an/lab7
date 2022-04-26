@@ -5,6 +5,7 @@ import server.Managers.CommandManager
 import java.io.*
 import java.net.SocketException
 import java.nio.channels.SocketChannel
+import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -14,8 +15,8 @@ class MonoHandler : Runnable{
     private val nameOfUser : String
     private val inn : ObjectInputStream
     private val outt : ObjectOutputStream
-    private val writeLock = ReentrantReadWriteLock()
-    private val semaphore = Semaphore(1, false)
+    private val semaphore = Semaphore(3)
+    private val executor = Executors.newFixedThreadPool(1);
 
     constructor(clientSocket : SocketChannel, commandManager: CommandManager, nameOfUser : String, inn : ObjectInputStream, outt : ObjectOutputStream){
         this.clientSocket = clientSocket;
@@ -33,7 +34,10 @@ class MonoHandler : Runnable{
             }
         }
         catch (e : IOException){
-            e.printStackTrace()
+            println("Клиент $nameOfUser отключился")
+            Thread.currentThread().interrupt()
+        }
+        catch (e : EOFException){
             println("Клиент $nameOfUser отключился")
             Thread.currentThread().interrupt()
         }
@@ -42,22 +46,22 @@ class MonoHandler : Runnable{
     private fun requestToClient() {
 
         try {
-            val command = inn.readObject() as CommandSerialize
+
+            val futureOne = executor.submit(ObjectReader<CommandSerialize>(inn))
+            val command = futureOne.get()
             println("Команда ${command.getNameCommand()} принята от $nameOfUser")
             Server.logger.info("Команда принята")
             commandManager.addToHistory(command.getNameCommand())
-            val answer = commandManager.launchCommand(command, nameOfUser)
-            outt.writeObject(answer)
-            outt.flush()
+            val future = executor.submit(CollectionRequester(commandManager, command, nameOfUser))
+            val answer = future.get()
+            val futureTwo = executor.submit(ObjectWriter(outt, answer))
+            val result = futureTwo.get()
         } catch (e: EOFException) {
-            println("Ошибка конца ввода")
-            println(e.printStackTrace())
-            println("Ожидание 5 секунд")
-            Thread.sleep(5000L)
+            println("Клиент $nameOfUser отключился")
+            Thread.currentThread().interrupt()
 
         } catch (e: SocketException) {
             println("Ошибка соединения")
-
         } catch (e: ClassCastException) {
             println("Ошибка исполнения")
         }

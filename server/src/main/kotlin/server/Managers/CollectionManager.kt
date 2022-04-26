@@ -9,6 +9,7 @@ import server.serverWork.Server
 import java.lang.Math.max
 import java.time.LocalDateTime
 import java.util.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
  * Класс для работы с коллекцией музыкальных групп
@@ -22,6 +23,7 @@ class CollectionManager {
     private lateinit var lastInitTime: LocalDateTime;
     private val inputData : InputData;
     private val postgresDao : PostgresDao
+    private val readWriteLock = ReentrantReadWriteLock(false)
 
 
     constructor(inputData: InputData, postgresDao: PostgresDao){
@@ -38,7 +40,7 @@ class CollectionManager {
 //    }
 
     fun update(id: String, musicBand: MusicBand?, list: List<String> = listOf(), owner : String) : Answer {
-
+        readWriteLock.writeLock().lock()
         try {
 
             if(postgresDao.update(id, musicBand, owner)){
@@ -70,6 +72,7 @@ class CollectionManager {
 
                 }
             }
+
             else return Answer("Не удалось обновавить элемент")
         } catch (e : NumberFormatException) {
             return Answer("Данная строка не является числом")
@@ -77,6 +80,9 @@ class CollectionManager {
             return Answer("Данная строка не является числом")
         }catch (e : NullPointerException){
                 return Answer("Ошибка : Команда не выполнена")
+        }
+        finally {
+            readWriteLock.writeLock().unlock()
         }
         return Answer("Команда update выполнена")
     }
@@ -148,17 +154,22 @@ class CollectionManager {
     }
 
     fun add(command : MusicBand?, list : List<String> = listOf(), owner: String) : Answer {
-
-        Server.logger.info("Выполнение команды add")
-        val musicBand : MusicBand? = command ?: inputData.askMusicBand(list);
-        return if(postgresDao.add(musicBand, owner)) {
-            if (musicBand != null)
-                collectionOfMusicBands.add(musicBand);
+        try {
+            readWriteLock.writeLock().lock()
+            Server.logger.info("Выполнение команды add")
+            val musicBand: MusicBand? = command ?: inputData.askMusicBand(list);
+            return if (postgresDao.add(musicBand, owner)) {
+                if (musicBand != null)
+                    collectionOfMusicBands.add(musicBand);
                 collectionOfMusicBands.stream().sorted(compareBy { it.name })
                 lastInitTime = LocalDateTime.now();
 
-            Answer("Команда add выполнена")
-        } else Answer("Ошибка добавления музыльной группы")
+                Answer("Команда add выполнена")
+            } else Answer("Ошибка добавления музыльной группы")
+        }
+        finally {
+            readWriteLock.writeLock().unlock()
+        }
 
     }
 
