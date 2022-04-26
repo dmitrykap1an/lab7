@@ -70,18 +70,18 @@ class CommandManager(
 
     }
 
-    private fun getCommandsString() : MutableList<String>{
-
-        val commandsString = mutableListOf<String>();
-        for(i in commands.indices){
-
-            commandsString.add(commands[i].getNameCommand().split(' ')[0])
-
-        }
-
-        return commandsString;
-
-    }
+//    private fun getCommandsString() : MutableList<String>{
+//
+//        val commandsString = mutableListOf<String>();
+//        for(i in commands.indices){
+//
+//            commandsString.add(commands[i].getNameCommand().split(' ')[0])
+//
+//        }
+//
+//        return commandsString;
+//
+//    }
 
     private fun help() : Answer {
 
@@ -184,12 +184,6 @@ class CommandManager(
 
 
     }
-
-//    private fun save(){
-//
-//        collectionManager.save()
-//
-//    }
 
     private fun history() : Answer {
 

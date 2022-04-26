@@ -6,6 +6,7 @@ import general.Exceptions.EmptyArgumentException
 import general.AppIO.Answer
 import server.Database.PostgresDao
 import server.serverWork.Server
+import java.lang.Math.max
 import java.time.LocalDateTime
 import java.util.*
 
@@ -27,6 +28,7 @@ class CollectionManager {
 
         this.inputData = inputData
         this.postgresDao = postgresDao
+        addMusicBandsToCollection();
 
     }
 
@@ -79,21 +81,21 @@ class CollectionManager {
         return Answer("Команда update выполнена")
     }
 
-//    private fun addFileCommandsToCollection(){
-//
-//
-//        val collection = fileManager.collectionReader("bootData");
-//        var mx = 0;
-//        collection.forEach {
-//            mx = max(it.id, mx)
-//            collectionOfMusicBands.add(it)
-//        }
-//        MusicBand.setId(mx + 1)
-//        collectionOfMusicBands.stream().sorted(compareBy { it.name });
-//        lastInitTime = LocalDateTime.now();
-//
-//
-//    }
+    private fun addMusicBandsToCollection(){
+
+
+        val collection = postgresDao.addMusicBandsToCollection()
+        var mx = 0;
+        collection.forEach {
+            mx = max(it.id, mx)
+            collectionOfMusicBands.add(it)
+        }
+        MusicBand.setId(mx + 1)
+        collectionOfMusicBands.stream().sorted(compareBy { it.name });
+        lastInitTime = LocalDateTime.now();
+
+
+    }
 
     fun info() : Answer {
 

@@ -48,8 +48,10 @@ class MonoHandler : Runnable{
             commandManager.addToHistory(command.getNameCommand())
             val answer = commandManager.launchCommand(command, nameOfUser)
             outt.writeObject(answer)
+            outt.flush()
         } catch (e: EOFException) {
             println("Ошибка конца ввода")
+            println(e.printStackTrace())
             println("Ожидание 5 секунд")
             Thread.sleep(5000L)
 
