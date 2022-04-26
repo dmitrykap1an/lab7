@@ -15,7 +15,6 @@ class MonoHandler : Runnable{
     private val nameOfUser : String
     private val inn : ObjectInputStream
     private val outt : ObjectOutputStream
-    private val semaphore = Semaphore(3)
     private val executor = Executors.newFixedThreadPool(1);
 
     constructor(clientSocket : SocketChannel, commandManager: CommandManager, nameOfUser : String, inn : ObjectInputStream, outt : ObjectOutputStream){
@@ -50,7 +49,7 @@ class MonoHandler : Runnable{
             val futureOne = executor.submit(ObjectReader<CommandSerialize>(inn))
             val command = futureOne.get()
             println("Команда ${command.getNameCommand()} принята от $nameOfUser")
-            Server.logger.info("Команда принята")
+            Server.logger.info("Команда ${command.getNameCommand()} принята от $nameOfUser")
             commandManager.addToHistory(command.getNameCommand(), nameOfUser)
             val future = executor.submit(CollectionRequester(commandManager, command, nameOfUser))
             val answer = future.get()
@@ -65,16 +64,6 @@ class MonoHandler : Runnable{
         } catch (e: ClassCastException) {
             println("Ошибка исполнения")
         }
-    }
-
-    private fun asquirePool(){
-        semaphore.acquire()
-        Server.logger.info("Отрытие доступа для 1 подключения")
-    }
-
-    private fun releasePool(){
-        semaphore.release()
-        Server.logger.info("Убираем подключение")
     }
 
 }

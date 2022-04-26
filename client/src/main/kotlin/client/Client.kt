@@ -51,8 +51,8 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
             }
             catch(e : ConnectException) {
                 println("Сервер не отвечает")
-                println("Ожидание 5 секунд")
-                Thread.sleep(5000L)
+                println("Завершение работы клиента")
+                exitProcess(0)
             }
         }
     }
@@ -101,15 +101,17 @@ class Client(commandFinder : CommandFinder, port : Int, host : String) : Runnabl
         } catch (e: ConnectException) {
             println("Связь нарушена")
             Thread.sleep(10000L)
+            openClient()
         } catch (e: CommandException) {
             println("Команда не найдена")
         } catch (e: EOFException) {
             println("Ошибка конца ввода")
+            openClient()
         }catch (e: SocketException) {
             println("Сервер закрыт")
         }catch (e : IOException){
             println("Связь потеряна")
-            Thread.currentThread().interrupt()
+            openClient()
         }
     }
 

@@ -34,6 +34,7 @@ class CommandManager(
     private val MAXLENGTH = 6;
     private var commands : MutableList<Command> = mutableListOf();
     private var commandsHistory : MutableList<String> = mutableListOf();
+    private val readWriteLock = ReentrantReadWriteLock()
 
 
     init {
@@ -55,14 +56,17 @@ class CommandManager(
 
 
     fun addToHistory(command : String, nameOfUser : String){
+        readWriteLock.writeLock().lock()
 
         if(commandsHistory.size == 6) {
 
             commandsHistory = commandsHistory.subList(1, MAXLENGTH)
-            commandsHistory.add(command);
+            commandsHistory.add("$command : $nameOfUser");
 
         }
         else commandsHistory.add("$command : $nameOfUser");
+
+        readWriteLock.writeLock().unlock()
 
     }
 
